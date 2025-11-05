@@ -13,7 +13,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_users_github_id", columnList = "github_id"),
+                @Index(name = "idx_users_github_username", columnList = "github_username"),
+                @Index(name = "idx_users_email", columnList = "email"),
+                @Index(name = "idx_users_level", columnList = "level"),
+                @Index(name = "idx_users_total_xp", columnList = "total_xp")
+        }
+)
 @Getter
 @Setter
 @SuperBuilder
