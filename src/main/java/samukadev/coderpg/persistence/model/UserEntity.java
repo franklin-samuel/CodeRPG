@@ -10,6 +10,8 @@ import samukadev.coderpg.domain.enums.SyncStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -33,6 +35,12 @@ public class UserEntity extends AbstractEntity<UUID> {
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "UUID")
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserFollowEntity> following = new ArrayList<>();
+
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserFollowEntity> followers = new ArrayList<>();
 
     @Column(name = "github_id", unique = true, nullable = false)
     private String githubId;

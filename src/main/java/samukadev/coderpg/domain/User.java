@@ -7,6 +7,8 @@ import samukadev.coderpg.domain.enums.SyncStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuperBuilder
 @Getter
@@ -15,6 +17,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class User extends AbstractDomain {
+
+    @Builder.Default
+    private List<UserFollow> following = new ArrayList<>();
+
+    @Builder.Default
+    private List<UserFollow> followers = new ArrayList<>();
+
     private Long githubId;
     private String githubUsername;
 
