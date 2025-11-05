@@ -29,6 +29,6 @@ public abstract class AbstractEntity<K> {
     private LocalDateTime modifiedAt;
 
     @Column(nullable = false)
-    private boolean active = true;
+    private Boolean active = true;
 
 }
