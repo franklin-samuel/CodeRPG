@@ -36,14 +36,14 @@ public class UserEntity extends AbstractEntity<UUID> {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "follower", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<UserFollowEntity> following = new ArrayList<>();
 
-    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "following", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<UserFollowEntity> followers = new ArrayList<>();
 
     @Column(name = "github_id", unique = true, nullable = false)
-    private String githubId;
+    private Long githubId;
 
     @Column(name = "github_username", unique = true, nullable = false)
     private String githubUsername;

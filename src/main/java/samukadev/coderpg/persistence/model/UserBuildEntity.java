@@ -54,12 +54,6 @@ public class UserBuildEntity extends AbstractEntity<UUID> {
     @Column(name = "framework", nullable = false)
     private String framework;
 
-    @Column(name = "framework_level", nullable = false)
-    private Integer frameworkLevel;
-
-    @Column(name = "framework_xp", nullable = false)
-    private Integer frameworkXp;
-
     @Column(name = "database", nullable = false)
     private String database;
 

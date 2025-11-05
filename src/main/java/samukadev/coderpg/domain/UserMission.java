@@ -27,7 +27,7 @@ public class UserMission extends AbstractDomain {
     private String icon;
     private Integer progress;
     private Integer target;
-    private boolean completed;
+    private Boolean completed;
     private LocalDateTime completedAt;
     private LocalDateTime expiresAt;
 }

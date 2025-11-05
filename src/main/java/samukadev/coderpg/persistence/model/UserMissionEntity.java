@@ -15,7 +15,6 @@ import java.util.UUID;
 @Table(
         name = "user_missions",
         indexes = {
-                @Index(name = "idx_user_missions_user_id", columnList = "user_id"),
                 @Index(name = "idx_user_missions_type", columnList = "mission_type"),
                 @Index(name = "idx_user_missions_completed", columnList = "completed"),
                 @Index(name = "idx_user_missions_expires_at", columnList = "expires_at"),

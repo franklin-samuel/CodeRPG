@@ -20,7 +20,7 @@ public class Activity extends AbstractDomain{
     private UUID userId;
     private ActivityType type;
     private Map<String, Object> data;
-    private boolean isPublic;
+    private Boolean isPublic;
     private Integer likesCount;
     private Integer commentsCount;
 

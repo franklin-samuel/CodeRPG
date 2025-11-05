@@ -16,12 +16,12 @@ public class UserBuild extends AbstractDomain {
     private UUID userId;
 
     private String primaryLanguage;
-    private int primaryLanguageLevel;
-    private int primaryLanguageXp;
+    private Integer primaryLanguageLevel;
+    private Integer primaryLanguageXp;
 
     private String  secondaryLanguage;
-    private int secondaryLanguageLevel;
-    private int secondaryLanguageXp;
+    private Integer secondaryLanguageLevel;
+    private Integer secondaryLanguageXp;
 
     private String framework;
     private String database;

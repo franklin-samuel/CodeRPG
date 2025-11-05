@@ -25,7 +25,7 @@ public class SkillHistory extends AbstractDomain{
     private Integer level;
     private Integer xp;
 
-    private boolean isEquipped;
+    private Boolean isEquipped;
 
     private LocalDate firstEquippedAt;
     private LocalDate lastEquippedAt;
