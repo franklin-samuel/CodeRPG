@@ -3,15 +3,14 @@ package samukadev.coderpg.domain.enums;
 import lombok.Getter;
 
 @Getter
-public enum SyncStatus {
-    PENDING("Pending"),
-    SYNCING("Syncing"),
-    COMPLETED("Completed"),
-    ERROR("Error");
+public enum Difficulty {
+    EASY("Easy"),
+    NORMAL("Normal"),
+    HARD("Hard");
 
     private final String displayName;
 
-    SyncStatus(String displayName) {
+    Difficulty(String displayName) {
         this.displayName = displayName;
     }
 }

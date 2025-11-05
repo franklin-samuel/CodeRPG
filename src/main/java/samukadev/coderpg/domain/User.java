@@ -43,7 +43,7 @@ public class User extends AbstractDomain {
     private LocalDateTime lastSyncAt;
     private LocalDateTime lastRespecAt;
     private SyncStatus syncStatus;
-    private boolean isActive;
+    private boolean active;
 
 
 }
