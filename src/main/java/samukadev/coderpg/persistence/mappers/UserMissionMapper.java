@@ -16,7 +16,6 @@ public interface UserMissionMapper {
     UserMission map(UserMissionEntity source);
 
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "active", ignore = true)
     UserMissionEntity map(UserMission source);
 
 }

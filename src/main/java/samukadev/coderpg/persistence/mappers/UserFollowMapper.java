@@ -18,7 +18,6 @@ public interface UserFollowMapper {
 
     @Mapping(target = "follower", ignore = true)
     @Mapping(target = "following", ignore = true)
-    @Mapping(target = "active", ignore = true)
     UserFollowEntity map(UserFollow source);
 
 }

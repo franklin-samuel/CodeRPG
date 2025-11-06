@@ -16,7 +16,6 @@ public interface ActivityMapper {
     Activity map(ActivityEntity source);
 
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "active", ignore = true)
     ActivityEntity map(Activity source);
 
 }

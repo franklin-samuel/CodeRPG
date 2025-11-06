@@ -16,7 +16,6 @@ public interface XpEventMapper {
     XpEvent map(XpEventEntity source);
 
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "active", ignore = true)
     XpEventEntity map(XpEvent source);
 
 }

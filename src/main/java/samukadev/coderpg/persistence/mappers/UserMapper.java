@@ -17,7 +17,6 @@ public interface UserMapper {
     @Mapping(target = "followers", source = "followers")
     User map(UserEntity source);
 
-    @Mapping(target = "active", ignore = true)
     UserEntity map(User source);
 
 }

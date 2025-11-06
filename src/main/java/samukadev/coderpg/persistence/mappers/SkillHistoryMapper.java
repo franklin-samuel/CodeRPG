@@ -16,7 +16,6 @@ public interface SkillHistoryMapper {
     SkillHistory map(SkillHistoryEntity source);
 
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "active", ignore = true)
     SkillHistoryEntity map(SkillHistory source);
 
 }

@@ -18,6 +18,8 @@ public class AbstractDomain {
 
     private LocalDateTime modifiedAt;
 
+    private Boolean active;
+
     public void validate() {
 
     }

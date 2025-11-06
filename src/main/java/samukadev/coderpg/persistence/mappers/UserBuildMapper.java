@@ -16,7 +16,6 @@ public interface UserBuildMapper {
     UserBuild map(UserBuildEntity source);
 
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "active", ignore = true)
     UserBuildEntity map(UserBuild source);
 
 }
