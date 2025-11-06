@@ -9,7 +9,11 @@ import samukadev.coderpg.core.persistence.UserMissionRepositoryPort;
 import samukadev.coderpg.domain.UserMission;
 import samukadev.coderpg.domain.enums.MissionType;
 import samukadev.coderpg.persistence.mappers.UserMissionMapper;
+import samukadev.coderpg.persistence.model.UserBuildEntity;
+import samukadev.coderpg.persistence.model.UserEntity;
+import samukadev.coderpg.persistence.model.UserMissionEntity;
 import samukadev.coderpg.persistence.repository.UserMissionRepository;
+import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,8 +27,8 @@ import java.util.UUID;
 public class UserMissionRepositoryAdapter implements UserMissionRepositoryPort {
 
     private final UserMissionRepository repository;
-
     private final UserMissionMapper mapper;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<UserMission> get(UUID id) {
@@ -34,9 +38,16 @@ public class UserMissionRepositoryAdapter implements UserMissionRepositoryPort {
 
     @Override
     public UserMission save(UserMission model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save user mission"));
+        UserMissionEntity entity = mapper.map(model);
+
+        if (model.getUserId() != null) {
+            UserEntity user = userRepository.findById(model.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            entity.setUser(user);
+        }
+
+        UserMissionEntity entitySaved = repository.save(entity);
+        return  mapper.map(entitySaved);
     }
 
     @Override

@@ -10,6 +10,10 @@ import samukadev.coderpg.domain.XpEvent;
 import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.enums.XpSource;
 import samukadev.coderpg.persistence.mappers.XpEventMapper;
+import samukadev.coderpg.persistence.model.UserBuildEntity;
+import samukadev.coderpg.persistence.model.UserEntity;
+import samukadev.coderpg.persistence.model.XpEventEntity;
+import samukadev.coderpg.persistence.repository.UserRepository;
 import samukadev.coderpg.persistence.repository.XpEventRepository;
 
 import java.time.LocalDateTime;
@@ -24,8 +28,8 @@ import java.util.UUID;
 public class XpEventRepositoryAdapter implements XpEventRepositoryPort {
 
     private final XpEventRepository repository;
-
     private final XpEventMapper mapper;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<XpEvent> get(UUID id) {
@@ -35,9 +39,16 @@ public class XpEventRepositoryAdapter implements XpEventRepositoryPort {
 
     @Override
     public XpEvent save(XpEvent model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save xp event"));
+        XpEventEntity entity = mapper.map(model);
+
+        if (model.getUserId() != null) {
+            UserEntity user = userRepository.findById(model.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            entity.setUser(user);
+        }
+
+        XpEventEntity entitySaved = repository.save(entity);
+        return  mapper.map(entitySaved);
     }
 
     @Override

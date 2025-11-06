@@ -7,7 +7,10 @@ import samukadev.coderpg.core.persistence.ActivityRepositoryPort;
 import samukadev.coderpg.domain.Activity;
 import samukadev.coderpg.domain.enums.ActivityType;
 import samukadev.coderpg.persistence.mappers.ActivityMapper;
+import samukadev.coderpg.persistence.model.ActivityEntity;
+import samukadev.coderpg.persistence.model.UserEntity;
 import samukadev.coderpg.persistence.repository.ActivityRepository;
+import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ public class ActivityRepositoryAdapter implements ActivityRepositoryPort {
 
     private final ActivityRepository repository;
     private final ActivityMapper mapper;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<Activity> get(UUID id) {
@@ -33,9 +37,16 @@ public class ActivityRepositoryAdapter implements ActivityRepositoryPort {
 
     @Override
     public Activity save(Activity model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save activity"));
+        ActivityEntity entity = mapper.map(model);
+
+        if (model.getUserId() != null) {
+            UserEntity user = userRepository.findById(model.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            entity.setUser(user);
+        }
+
+        ActivityEntity entitySaved = repository.save(entity);
+        return mapper.map(entitySaved);
     }
 
     @Override

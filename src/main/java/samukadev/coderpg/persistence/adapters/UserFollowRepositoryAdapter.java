@@ -8,7 +8,10 @@ import org.springframework.stereotype.Repository;
 import samukadev.coderpg.core.persistence.UserFollowRepositoryPort;
 import samukadev.coderpg.domain.UserFollow;
 import samukadev.coderpg.persistence.mappers.UserFollowMapper;
+import samukadev.coderpg.persistence.model.UserEntity;
+import samukadev.coderpg.persistence.model.UserFollowEntity;
 import samukadev.coderpg.persistence.repository.UserFollowRepository;
+import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +24,8 @@ import java.util.UUID;
 public class UserFollowRepositoryAdapter implements UserFollowRepositoryPort {
 
     private final UserFollowRepository repository;
-
     private final UserFollowMapper mapper;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<UserFollow> get(UUID id) {
@@ -32,9 +35,22 @@ public class UserFollowRepositoryAdapter implements UserFollowRepositoryPort {
 
     @Override
     public UserFollow save(final UserFollow model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save user follow"));
+        UserFollowEntity entity = mapper.map(model);
+
+        if (model.getFollowerId() != null) {
+            UserEntity follower = userRepository.findById(model.getFollowerId())
+                    .orElseThrow(() -> new RuntimeException("Follower not found"));
+            entity.setFollower(follower);
+        }
+
+        if (model.getFollowingId() != null) {
+            UserEntity following = userRepository.findById(model.getFollowingId())
+                    .orElseThrow(() -> new RuntimeException("Following not found"));
+            entity.setFollowing(following);
+        }
+
+        UserFollowEntity saved = repository.save(entity);
+        return mapper.map(saved);
     }
 
     @Override

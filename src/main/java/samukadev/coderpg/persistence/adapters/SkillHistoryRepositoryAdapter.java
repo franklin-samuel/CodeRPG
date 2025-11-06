@@ -7,7 +7,10 @@ import samukadev.coderpg.core.persistence.SkillHistoryRepositoryPort;
 import samukadev.coderpg.domain.SkillHistory;
 import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.persistence.mappers.SkillHistoryMapper;
+import samukadev.coderpg.persistence.model.SkillHistoryEntity;
+import samukadev.coderpg.persistence.model.UserEntity;
 import samukadev.coderpg.persistence.repository.SkillHistoryRepository;
+import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +26,7 @@ public class SkillHistoryRepositoryAdapter implements SkillHistoryRepositoryPort
 
     private final SkillHistoryRepository repository;
     private final SkillHistoryMapper mapper;
+    private final UserRepository userRepository;
 
     @Override
     public Optional<SkillHistory> get(UUID id) {
@@ -32,9 +36,16 @@ public class SkillHistoryRepositoryAdapter implements SkillHistoryRepositoryPort
 
     @Override
     public SkillHistory save(SkillHistory model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save skill history"));
+        SkillHistoryEntity entity = mapper.map(model);
+
+        if (model.getUserId() != null) {
+            UserEntity user = userRepository.findById(model.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            entity.setUser(user);
+        }
+
+        SkillHistoryEntity entitySaved = repository.save(entity);
+        return mapper.map(entitySaved);
     }
 
     @Override

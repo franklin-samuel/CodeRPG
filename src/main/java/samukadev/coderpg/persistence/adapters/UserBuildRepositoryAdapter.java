@@ -8,7 +8,10 @@ import org.springframework.stereotype.Repository;
 import samukadev.coderpg.core.persistence.UserBuildRepositoryPort;
 import samukadev.coderpg.domain.UserBuild;
 import samukadev.coderpg.persistence.mappers.UserBuildMapper;
+import samukadev.coderpg.persistence.model.UserBuildEntity;
+import samukadev.coderpg.persistence.model.UserEntity;
 import samukadev.coderpg.persistence.repository.UserBuildRepository;
+import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +24,9 @@ import java.util.UUID;
 public class UserBuildRepositoryAdapter implements UserBuildRepositoryPort {
 
     private final UserBuildRepository repository;
-
     private final UserBuildMapper mapper;
+    private final UserRepository userRepository;
+
 
     @Override
     public Optional<UserBuild> get(UUID id) {
@@ -32,9 +36,16 @@ public class UserBuildRepositoryAdapter implements UserBuildRepositoryPort {
 
     @Override
     public UserBuild save(UserBuild model) {
-        return of(repository.save(mapper.map(model)))
-                .map(mapper::map)
-                .orElseThrow(() -> new IllegalStateException("Failed to save user build"));
+        UserBuildEntity entity = mapper.map(model);
+
+        if (model.getUserId() != null) {
+            UserEntity user = userRepository.findById(model.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            entity.setUser(user);
+        }
+
+        UserBuildEntity entitySaved = repository.save(entity);
+        return  mapper.map(entitySaved);
     }
 
     @Override
