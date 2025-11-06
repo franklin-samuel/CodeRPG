@@ -1,0 +1,26 @@
+package samukadev.coderpg.persistence.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import samukadev.coderpg.domain.enums.MissionType;
+import samukadev.coderpg.persistence.model.UserMissionEntity;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface UserMissionRepository extends JpaRepository<UserMissionEntity, UUID> {
+
+    List<UserMissionEntity> findByUserId(UUID userId);
+
+    List<UserMissionEntity> findByUserIdAndCompleted(UUID userId, Boolean completed);
+
+    List<UserMissionEntity> findByUserIdAndMissionType(UUID userId, MissionType missionType);
+
+    Optional<UserMissionEntity> findByUserIdAndMissionId(UUID userId, String missionId);
+
+    List<UserMissionEntity> findByUserIdAndExpiresAtBefore(UUID userId, LocalDateTime expiresAt);
+
+    List<UserMissionEntity> findActiveByUserId(UUID userId);
+
+}
