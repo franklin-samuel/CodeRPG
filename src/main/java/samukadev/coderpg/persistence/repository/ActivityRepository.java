@@ -1,6 +1,8 @@
 package samukadev.coderpg.persistence.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import samukadev.coderpg.domain.enums.ActivityType;
 import samukadev.coderpg.persistence.model.ActivityEntity;
 
@@ -16,10 +18,12 @@ public interface ActivityRepository extends JpaRepository<ActivityEntity, UUID> 
 
     List<ActivityEntity> findByUserIdAndType(UUID userId, ActivityType type);
 
-    List<ActivityEntity> findPublicActivitiesByUsersIds(List<UUID> usersId);
+    @Query("SELECT a FROM ActivityEntity a WHERE a.user.id IN :userIds AND a.isPublic = true AND a.active = true ORDER BY a.createdAt DESC")
+    List<ActivityEntity> findPublicActivitiesByUsersIds(@Param("userIds") List<UUID> userIds);
 
     List<ActivityEntity> findByUserIdAndCreatedAtAfter(UUID userId, LocalDateTime after);
 
-    List<ActivityEntity> findRecentPublicActivities(Integer limit);
+    @Query("SELECT a FROM ActivityEntity a WHERE a.isPublic = true AND a.active = true ORDER BY a.createdAt DESC LIMIT :limit")
+    List<ActivityEntity> findRecentPublicActivities(@Param("limit") Integer limit);
 
 }

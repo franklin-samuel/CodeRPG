@@ -1,6 +1,9 @@
 package samukadev.coderpg.persistence.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.persistence.model.SkillHistoryEntity;
 
@@ -28,10 +31,14 @@ public interface SkillHistoryRepository extends JpaRepository<SkillHistoryEntity
             String skillName
     );
 
-    List<SkillHistoryEntity> findAllSkillsByUserId(UUID userId);
+    @Query("SELECT sh FROM SkillHistoryEntity sh WHERE sh.user.id = :userId AND sh.active = true")
+    List<SkillHistoryEntity> findAllSkillsByUserId(@Param("userId") UUID userId);
 
-    long countDistinctSkillsByUserId(UUID userId);
+    @Query("SELECT COUNT(DISTINCT sh.skillName) FROM SkillHistoryEntity sh WHERE sh.user.id = :userId AND sh.active = true")
+    long countDistinctSkillsByUserId(@Param("userId") UUID userId);
 
-    void unequipAllByUserIdAndSkillType(UUID userId, SkillType skillType);
+    @Modifying
+    @Query("UPDATE SkillHistoryEntity sh SET sh.isEquipped = false, sh.unequippedAt = CURRENT_TIMESTAMP WHERE sh.user.id = :userId AND sh.skillType = :skillType")
+    void unequipAllByUserIdAndSkillType(@Param("userId") UUID userId, @Param("skillType") SkillType skillType);
 
 }
