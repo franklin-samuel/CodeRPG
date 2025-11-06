@@ -18,10 +18,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class User extends AbstractDomain {
 
-    @Builder.Default
     private List<UserFollow> following = new ArrayList<>();
 
-    @Builder.Default
     private List<UserFollow> followers = new ArrayList<>();
 
     private Long githubId;

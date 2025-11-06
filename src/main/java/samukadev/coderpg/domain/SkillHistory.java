@@ -7,7 +7,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import samukadev.coderpg.domain.enums.SkillType;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @SuperBuilder
@@ -27,8 +27,8 @@ public class SkillHistory extends AbstractDomain{
 
     private Boolean isEquipped;
 
-    private LocalDate firstEquippedAt;
-    private LocalDate lastEquippedAt;
-    private LocalDate unequippedAt;
+    private LocalDateTime firstEquippedAt;
+    private LocalDateTime lastEquippedAt;
+    private LocalDateTime unequippedAt;
 
 }
