@@ -2,7 +2,7 @@ package samukadev.coderpg.persistence.adapters;
 
 import static java.util.Optional.of;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import samukadev.coderpg.core.persistence.XpEventRepositoryPort;
@@ -10,7 +10,6 @@ import samukadev.coderpg.domain.XpEvent;
 import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.enums.XpSource;
 import samukadev.coderpg.persistence.mappers.XpEventMapper;
-import samukadev.coderpg.persistence.model.UserBuildEntity;
 import samukadev.coderpg.persistence.model.UserEntity;
 import samukadev.coderpg.persistence.model.XpEventEntity;
 import samukadev.coderpg.persistence.repository.UserRepository;

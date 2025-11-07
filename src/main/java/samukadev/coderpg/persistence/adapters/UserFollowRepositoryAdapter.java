@@ -2,7 +2,7 @@ package samukadev.coderpg.persistence.adapters;
 
 import static java.util.Optional.of;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import samukadev.coderpg.core.persistence.UserFollowRepositoryPort;

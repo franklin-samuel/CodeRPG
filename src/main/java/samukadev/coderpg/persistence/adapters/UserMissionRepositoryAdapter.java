@@ -2,14 +2,13 @@ package samukadev.coderpg.persistence.adapters;
 
 import static java.util.Optional.of;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import samukadev.coderpg.core.persistence.UserMissionRepositoryPort;
 import samukadev.coderpg.domain.UserMission;
 import samukadev.coderpg.domain.enums.MissionType;
 import samukadev.coderpg.persistence.mappers.UserMissionMapper;
-import samukadev.coderpg.persistence.model.UserBuildEntity;
 import samukadev.coderpg.persistence.model.UserEntity;
 import samukadev.coderpg.persistence.model.UserMissionEntity;
 import samukadev.coderpg.persistence.repository.UserMissionRepository;

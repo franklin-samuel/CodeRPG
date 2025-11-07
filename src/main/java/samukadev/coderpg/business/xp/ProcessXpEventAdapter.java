@@ -1,6 +1,6 @@
 package samukadev.coderpg.business.xp;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,6 @@ import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.core.persistence.XpEventRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.XpEvent;
-import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.exceptions.BusinessException;
 
 @Slf4j
