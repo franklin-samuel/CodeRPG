@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import samukadev.coderpg.business.utils.CalculateUserLevel;
 import samukadev.coderpg.business.utils.UpdateSkillProgress;
 import samukadev.coderpg.business.utils.UpdateUserStreak;
 import samukadev.coderpg.core.Context;
@@ -47,7 +48,7 @@ public class ProcessXpEventAdapter implements ProcessXpEventPort {
         user.setXp(user.getXp() + xpEvent.getXpAmount());
         user.setTotalXp(user.getTotalXp() + xpEvent.getXpAmount());
 
-        int newLevel = calculateUserLevel(user.getTotalXp());
+        int newLevel = CalculateUserLevel.execute(user.getTotalXp());
         user.setLevel(newLevel);
 
         UpdateUserStreak.execute(user);
