@@ -1,5 +1,6 @@
 package samukadev.coderpg.security.oauth;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,9 @@ import org.springframework.stereotype.Component;
 import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.user.CreateUserPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
+import samukadev.coderpg.core.security.SaveGitHubTokenPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.enums.ClassType;
-import samukadev.coderpg.domain.enums.SyncStatus;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -25,7 +26,6 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -33,14 +33,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserRepositoryPort userRepository;
     private final CreateUserPort createUserPort;
-    private final GitHubOAuthService gitHubOAuthService;
+    private final SaveGitHubTokenPort saveGitHubTokenPort;
 
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
             Authentication authentication
-    ) throws IOException {
+    ) throws IOException, ServletException {
 
         if (!(authentication instanceof OAuth2AuthenticationToken oauthToken)) {
             super.onAuthenticationSuccess(request, response, authentication);
@@ -50,7 +50,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         OAuth2User oAuth2User = oauthToken.getPrincipal();
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        // Get GitHub user info
         Long githubId = ((Number) attributes.get("id")).longValue();
         String githubUsername = (String) attributes.get("login");
         String name = (String) attributes.get("name");
@@ -64,7 +63,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Integer following = (Integer) attributes.get("following");
         String createdAt = (String) attributes.get("created_at");
 
-        // Get OAuth token
         OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(
                 oauthToken.getAuthorizedClientRegistrationId(),
                 oauthToken.getName()
@@ -75,21 +73,18 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String refreshToken = authorizedClient.getRefreshToken() != null
                 ? authorizedClient.getRefreshToken().getTokenValue()
                 : null;
+        LocalDateTime expiresAt = accessToken.getExpiresAt() != null
+                ? LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault())
+                : null;
 
-        // Check if user exists
-        Optional<User> existingUser = userRepository.findByEmail(email != null ? email : githubUsername + "@github.com");
+        Optional<User> existingUser = userRepository.findByGitHubId(githubId);
 
         User user;
+        boolean isNewUser = false;
+
         if (existingUser.isPresent()) {
-            // Update existing user
             user = existingUser.get();
-            user.setGithubAccessToken(token);
-            user.setGithubRefreshToken(refreshToken);
-            user.setTokenExpiresAt(
-                    accessToken.getExpiresAt() != null
-                            ? LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault())
-                            : null
-            );
+            user.setGithubUsername(githubUsername);
             user.setAvatarUrl(avatarUrl);
             user.setBio(bio);
             user.setLocation(location);
@@ -98,52 +93,46 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             user.setGithubFollowers(followers);
             user.setGithubFollowing(following);
             user.setLastSyncAt(LocalDateTime.now());
-            user.setSyncStatus(SyncStatus.COMPLETED);
 
             userRepository.save(user);
-            log.info("Updated existing user: {}", githubUsername);
         } else {
-            // Create new user
+            isNewUser = true;
+
             User newUser = User.builder()
                     .githubId(githubId)
                     .githubUsername(githubUsername)
                     .name(name)
-                    .email(email != null ? email : githubUsername + "@github.com")
+                    .email(email)
                     .avatarUrl(avatarUrl)
                     .bio(bio)
                     .location(location)
                     .website(website)
                     .classType(ClassType.FULLSTACK)
-                    .level(1)
-                    .xp(0)
-                    .totalXp(0L)
                     .githubPublicRepos(publicRepos)
                     .githubFollowers(followers)
                     .githubFollowing(following)
                     .githubCreatedAt(createdAt != null ? LocalDateTime.parse(createdAt.replace("Z", "")) : null)
-                    .currentStreak(0)
-                    .longestStreak(0)
-                    .lastActivityDate(null)
-                    .lastSyncAt(LocalDateTime.now())
-                    .lastRespecAt(null)
-                    .syncStatus(SyncStatus.COMPLETED)
-                    .githubAccessToken(token)
-                    .githubRefreshToken(refreshToken)
-                    .tokenExpiresAt(
-                            accessToken.getExpiresAt() != null
-                                    ? LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault())
-                                    : null
-                    )
                     .active(true)
                     .build();
 
-            Context context = new Context(newUser);
-            user = createUserPort.execute(context);
-            log.info("Created new user: {}", githubUsername);
+            Context createUserContext = new Context(newUser);
+            user = createUserPort.execute(createUserContext);
         }
 
-        // Redirect to dashboard or home
-        getRedirectStrategy().sendRedirect(request, response, "/dashboard");
+        Context saveTokenContext = new Context(user);
+        saveTokenContext.putProperty("userId", user.getId());
+        saveTokenContext.putProperty("accessToken", token);
+        saveTokenContext.putProperty("refreshToken", refreshToken);
+        saveTokenContext.putProperty("expiresAt", expiresAt);
+
+        saveGitHubTokenPort.execute(saveTokenContext);
+
+        String redirectUrl = isNewUser ? "/onboarding" : "/home";
+        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
+
+
+
+
 
 }

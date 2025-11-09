@@ -10,7 +10,6 @@ import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.enums.ClassType;
 import samukadev.coderpg.domain.enums.SyncStatus;
 import samukadev.coderpg.domain.exceptions.BusinessException;
-import samukadev.coderpg.persistence.repository.UserRepository;
 
 import java.time.LocalDateTime;
 
@@ -30,23 +29,25 @@ public class CreateUserAdapter implements CreateUserPort {
             throw new BusinessException("User data is required");
         }
 
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new BusinessException("Email is required");
-        }
-
         if (user.getGithubId() == null) {
             throw new BusinessException("Github ID is required");
         }
 
-        if (repository.existsByEmail(user.getEmail())) {
-            throw new BusinessException("Email already exists");
+        if (repository.existsByGitHubId(user.getGithubId())) {
+            throw new BusinessException("Github ID already exists");
+        }
+
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            if (repository.existsByEmail(user.getEmail())) {
+                throw new BusinessException("Email already exists");
+            }
         }
 
         User newUser = User.builder()
                 .githubId(user.getGithubId())
                 .githubUsername(user.getGithubUsername())
                 .name(user.getName())
-                .email(null) 
+                .email(user.getEmail())
                 .avatarUrl(null)
                 .bio(null)
                 .location(null)
@@ -68,7 +69,12 @@ public class CreateUserAdapter implements CreateUserPort {
                 .active(true)
                 .build();
 
-        return repository.save(newUser);
+        User userSaved = repository.save(newUser);
+
+        context.putProperty("userCreated", true);
+        context.putProperty("userId", userSaved.getId());
+
+        return userSaved;
     }
 
 }

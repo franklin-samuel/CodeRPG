@@ -6,7 +6,12 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Service;
+import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
+import samukadev.coderpg.core.security.GetActiveGitHubTokenPort;
+import samukadev.coderpg.core.security.RefreshGitHubTokenPort;
+import samukadev.coderpg.core.security.RevokeGitHubTokenPort;
+import samukadev.coderpg.domain.GitHubToken;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.exceptions.BusinessException;
 
@@ -14,75 +19,63 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class GitHubOAuthService {
 
-    private final OAuth2AuthorizedClientService authorizedClientService;
-    private final UserRepositoryPort userRepository;
+    private final GetActiveGitHubTokenPort getActiveTokenPort;
+    private final RefreshGitHubTokenPort refreshTokenPort;
+    private final RevokeGitHubTokenPort revokeTokenPort;
 
-    public void saveUserToken(String githubUsername, String accessToken, String refreshToken, Instant expiresAt) {
-        Optional<User> userOpt = userRepository.findByEmail(githubUsername + "@github.com");
+    public String getAccessToken(UUID userId) {
+        Context context =  new Context();
+        context.putProperty("userId", userId);
 
-        if (userOpt.isEmpty()) {
-            log.warn("User not found for GitHub username: {}", githubUsername);
-            return;
+        try {
+            GitHubToken token = getActiveTokenPort.execute(context);
+            return token.getGithubAccessToken();
+        } catch (BusinessException e) {
+            if (context.getProperty("tokenExpired", Boolean.class) != null) {
+                return refreshAccessToken(userId);
+            }
+            throw e;
         }
-
-        User user = userOpt.get();
-        user.setGithubAccessToken(accessToken);
-        user.setGithubRefreshToken(refreshToken);
-
-        if (expiresAt != null) {
-            user.setTokenExpiresAt(LocalDateTime.ofInstant(expiresAt, ZoneId.systemDefault()));
-        }
-
-        userRepository.save(user);
-        log.info("GitHub token saved for user: {}", githubUsername);
     }
 
-    public String getUserToken(String githubUsername) {
-        Optional<User> userOpt = userRepository.findByEmail(githubUsername + "@github.com");
+    public String refreshAccessToken(UUID userId) {
+        Context context =  new Context();
+        context.putProperty("userId", userId);
 
-        if (userOpt.isEmpty()) {
-            throw new BusinessException("User not found: " + githubUsername);
-        }
+        GitHubToken newToken = refreshTokenPort.execute(context);
 
-        User user = userOpt.get();
-
-        if (user.getGithubAccessToken() == null) {
-            throw new BusinessException("User has no GitHub token. Please login again.");
-        }
-
-        // Check if token is expired
-        if (user.getTokenExpiresAt() != null &&
-                user.getTokenExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("GitHub token expired. Please login again.");
-        }
-
-        return user.getGithubAccessToken();
+        return newToken.getGithubAccessToken();
     }
 
-    public OAuth2AuthorizedClient getAuthorizedClient(String principalName) {
-        return authorizedClientService.loadAuthorizedClient("github", principalName);
+    public void revokeUserToken(UUID userId) {
+        Context context =  new Context();
+        context.putProperty("userId", userId);
+
+        revokeTokenPort.execute(context);
     }
 
-    public void revokeUserToken(String githubUsername) {
-        Optional<User> userOpt = userRepository.findByEmail(githubUsername + "@github.com");
+    public boolean hasValideToken(UUID userId) {
+        Context context =  new Context();
+        context.putProperty("userId", userId);
 
-        if (userOpt.isEmpty()) {
-            return;
+        try {
+            GitHubToken token = getActiveTokenPort.execute(context);
+
+            if (token.getExpiresAt() != null) {
+                return token.getExpiresAt().isAfter(LocalDateTime.now());
+            }
+
+            return true;
+        } catch (BusinessException e) {
+            return false;
         }
-
-        User user = userOpt.get();
-        user.setGithubAccessToken(null);
-        user.setGithubRefreshToken(null);
-        user.setTokenExpiresAt(null);
-
-        userRepository.save(user);
-        log.info("GitHub token revoked for user: {}", githubUsername);
     }
 
 }

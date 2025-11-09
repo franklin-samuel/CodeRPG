@@ -42,6 +42,17 @@ public class GitHubTokenRepositoryAdapter implements GitHubTokenRepositoryPort {
                 .map(mapper::map);
     }
 
+    @Override
+    public Optional<GitHubToken> findByUserIdAndActiveTrue(final UUID userId) {
+        return gitHubTokenRepository.findByUserIdAndActiveTrue(userId)
+                .map(mapper::map);
+    }
+
+    @Override
+    public void deactiveAllByUserId(final UUID userId) {
+        gitHubTokenRepository.deactiveAllByUserId(userId);
+    }
+
 }
 
 
