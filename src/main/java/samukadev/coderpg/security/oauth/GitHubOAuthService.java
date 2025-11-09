@@ -2,23 +2,15 @@ package samukadev.coderpg.security.oauth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Service;
 import samukadev.coderpg.core.Context;
-import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.core.security.GetActiveGitHubTokenPort;
 import samukadev.coderpg.core.security.RefreshGitHubTokenPort;
 import samukadev.coderpg.core.security.RevokeGitHubTokenPort;
 import samukadev.coderpg.domain.GitHubToken;
-import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.exceptions.BusinessException;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
