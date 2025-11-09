@@ -1,4 +1,4 @@
-package samukadev.coderpg.infrastructure.github.exceptions;
+package samukadev.coderpg.domain.exceptions;
 
 import lombok.Getter;
 

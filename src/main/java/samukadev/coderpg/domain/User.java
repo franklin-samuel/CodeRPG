@@ -18,9 +18,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class User extends AbstractDomain {
 
-    private List<UserFollow> following = new ArrayList<>();
+    private List<UserFollow> following;
 
-    private List<UserFollow> followers = new ArrayList<>();
+    private List<UserFollow> followers;
 
     private Long githubId;
     private String githubUsername;
