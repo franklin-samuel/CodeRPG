@@ -23,8 +23,8 @@ public class GitHubTokenEntity extends AbstractEntity<UUID> {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true,
-            foreignKey = @ForeignKey(name = "fk_user_build_user"))
+    @JoinColumn(name = "user_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_github_token_user"))
     private UserEntity user;
 
     @Column(name = "github_access_token", nullable = false)

@@ -18,6 +18,4 @@ public interface GitHubTokenRepository extends JpaRepository<GitHubTokenEntity, 
     @Modifying
     @Query("UPDATE GitHubTokenEntity t SET t.active = false WHERE t.user.id = :userId")
     void deactiveAllByUserId(@Param("userId") UUID userId);
-
-    UUID user(UserEntity user);
 }
