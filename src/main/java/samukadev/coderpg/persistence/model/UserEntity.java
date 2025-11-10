@@ -107,7 +107,7 @@ public class UserEntity extends AbstractEntity<UUID> {
     private LocalDateTime lastRespecAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "sync_status", nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    @Column(name = "sync_status", nullable = false)
     private SyncStatus syncStatus;
 
 }

@@ -33,7 +33,7 @@ public class CreateUserAdapter implements CreateUserPort {
             throw new BusinessException("Github ID is required");
         }
 
-        if (repository.existsByGitHubId(user.getGithubId())) {
+        if (repository.existsByGithubId(user.getGithubId())) {
             throw new BusinessException("Github ID already exists");
         }
 

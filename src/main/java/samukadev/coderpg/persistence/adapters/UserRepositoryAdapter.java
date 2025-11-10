@@ -58,13 +58,13 @@ public class UserRepositoryAdapter implements UserRepositoryPort, ReadRepository
     }
 
     @Override
-    public boolean existsByGitHubId(final Number githubId) {
-        return repository.existsByGitHubId(githubId);
+    public boolean existsByGithubId(final Number githubId) {
+        return repository.existsByGithubId(githubId);
     }
 
     @Override
     public Optional<User> findByGitHubId(final Number githubId) {
-        return repository.findByGitHubId(githubId)
+        return repository.findByGithubId(githubId)
                 .map(mapper::map);
     }
 

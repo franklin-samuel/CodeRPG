@@ -11,7 +11,7 @@ public interface UserRepositoryPort extends BaseRepositoryPort<User> {
 
     boolean existsByEmail(String email);
 
-    boolean existsByGitHubId(Number githubId);
+    boolean existsByGithubId(Number githubId);
 
     Optional<User> findByGitHubId(Number githubId);
 
