@@ -51,6 +51,6 @@ public class UserResponse {
     private UserBuildResponse build;
 
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime modifiedAt;
 
 }
