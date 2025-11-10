@@ -1,7 +1,6 @@
 package samukadev.coderpg.web.controllers;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -11,7 +10,6 @@ import samukadev.coderpg.core.business.mission.CompleteMissionPort;
 import samukadev.coderpg.core.business.mission.GenerateDailyMissionsPort;
 import samukadev.coderpg.core.persistence.UserMissionRepositoryPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
-import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.UserMission;
 import samukadev.coderpg.domain.enums.MissionType;
 import samukadev.coderpg.domain.exceptions.BusinessException;
@@ -20,6 +18,7 @@ import samukadev.coderpg.web.mappers.MissionModelMapper;
 import samukadev.coderpg.web.model.response.MissionListResponse;
 import samukadev.coderpg.web.routes.MissionsRoute;
 import samukadev.coderpg.web.model.response.MissionResponse;
+import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,24 +31,23 @@ public class MissionController {
     private final CompleteMissionPort completeMissionPort;
     private final UserMissionRepositoryPort userMissionRepository;
     private final UserRepositoryPort userRepository;
-    private final MissionModelMapper missionDtoMapper;
+    private final MissionModelMapper missionModelMapper;
+    private final SecurityUtils securityUtils;
 
     @GetMapping(MissionsRoute.DAILY)
     public ResponseEntity<ApiResponse<MissionListResponse>> getDailyMissions(
             @AuthenticationPrincipal OAuth2User principal
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
 
         generateDailyMissionsPort.execute(context);
 
         List<UserMission> missions = userMissionRepository
-                .findByUserIdAndMissionType(user.getId(), MissionType.DAILY);
+                .findByUserIdAndMissionType(userId, MissionType.DAILY);
 
         return buildMissionListResponse(missions);
     }
@@ -59,12 +57,10 @@ public class MissionController {
             @AuthenticationPrincipal OAuth2User principal
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         List<UserMission> missions = userMissionRepository
-                .findActiveByUserId(user.getId());
+                .findActiveByUserId(userId);
 
         return buildMissionListResponse(missions);
     }
@@ -74,12 +70,10 @@ public class MissionController {
             @AuthenticationPrincipal OAuth2User principal
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         List<UserMission> missions = userMissionRepository
-                .findByUserId(user.getId());
+                .findByUserId(userId);
 
         return buildMissionListResponse(missions);
     }
@@ -90,18 +84,14 @@ public class MissionController {
             @PathVariable UUID id
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         UserMission mission = userMissionRepository.get(id)
                 .orElseThrow(() -> new BusinessException("Mission not found"));
 
-        if (!mission.getUserId().equals(user.getId())) {
-            throw new BusinessException("Mission does not belong to user");
-        }
+        securityUtils.validateResourceOwner(principal, mission.getUserId());
 
-        MissionResponse response = missionDtoMapper.toResponse(mission);
+        MissionResponse response = missionModelMapper.toResponse(mission);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -112,16 +102,14 @@ public class MissionController {
             @PathVariable UUID id
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("missionId", id);
 
         UserMission mission = completeMissionPort.execute(context);
-        MissionResponse response = missionDtoMapper.toResponse(mission);
+        MissionResponse response = missionModelMapper.toResponse(mission);
 
         return ResponseEntity.ok(ApiResponse.success(
                 response,
@@ -133,7 +121,7 @@ public class MissionController {
             List<UserMission> missions
     ) {
         List<MissionResponse> missionResponses = missions.stream()
-                .map(missionDtoMapper::toResponse)
+                .map(missionModelMapper::toResponse)
                 .toList();
 
         int completedCount = (int) missions.stream()

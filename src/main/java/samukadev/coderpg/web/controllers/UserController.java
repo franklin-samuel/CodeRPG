@@ -22,6 +22,7 @@ import samukadev.coderpg.web.model.request.UpdateUserBuildRequest;
 import samukadev.coderpg.web.model.response.UserResponse;
 import samukadev.coderpg.web.model.response.UserStatsResponse;
 import samukadev.coderpg.web.routes.UsersRoute;
+import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.util.UUID;
 
@@ -35,17 +36,16 @@ public class UserController {
     private final UserRepositoryPort userRepositoryPort;
     private final UserBuildRepositoryPort userBuildRepositoryPort;
     private final UserModelMapper userModelMapper;
+    private final SecurityUtils securityUtils;
 
     @GetMapping(UsersRoute.ME)
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
             @AuthenticationPrincipal OAuth2User principal
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
 
         User userProfile = getUserProfilePort.execute(context);
         UserResponse response = userModelMapper.toResponse(userProfile);
@@ -71,12 +71,10 @@ public class UserController {
             @AuthenticationPrincipal OAuth2User principal,
             @Valid @RequestBody CompleteOnBoardingRequest request
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("name", request.getName());
         context.putProperty("classType", request.getClassType());
         context.putProperty("email", request.getEmail());
@@ -95,14 +93,12 @@ public class UserController {
             @AuthenticationPrincipal OAuth2User principal,
             @Valid @RequestBody UpdateUserBuildRequest request
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         UserBuild buildData = userModelMapper.toBuildDomain(request);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("buildData", buildData);
 
         User updatedUser = updateUserBuildPort.execute(context);
@@ -118,12 +114,10 @@ public class UserController {
     public  ResponseEntity<ApiResponse<UserStatsResponse>> getUserStats(
             @AuthenticationPrincipal OAuth2User principal
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
 
         User userProfile = getUserProfilePort.execute(context);
         UserStatsResponse stats = userModelMapper.toStatsResponse(userProfile, context);

@@ -16,6 +16,7 @@ import samukadev.coderpg.domain.exceptions.GitHubWebhookException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -24,6 +25,7 @@ public class GlobalExceptionHandler {
             BusinessException ex,
             WebRequest request
     ) {
+        log.warn("Business exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
         ApiResponse<Void> response = ApiResponse.error(
                 ex.getMessage(),
@@ -40,6 +42,8 @@ public class GlobalExceptionHandler {
             GitHubApiException ex,
             WebRequest request
     ) {
+        log.error("GitHub API exception: {} - Status: {} - Path: {}",
+                ex.getMessage(), ex.getStatusCode(), request.getDescription(false));
 
         ApiResponse<Void> response = ApiResponse.error(
                 ex.getMessage(),
@@ -60,6 +64,7 @@ public class GlobalExceptionHandler {
             GitHubWebhookException ex,
             WebRequest request
     ) {
+        log.error("GitHub webhook exception: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
         ApiResponse<Void> response = ApiResponse.error(
                 ex.getMessage(),
@@ -75,6 +80,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
             MethodArgumentNotValidException ex
     ) {
+        log.warn("Validation failed: {} errors", ex.getBindingResult().getErrorCount());
 
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
@@ -100,6 +106,7 @@ public class GlobalExceptionHandler {
             AccessDeniedException ex,
             WebRequest request
     ) {
+        log.warn("Access denied: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
         ApiResponse<Void> response = ApiResponse.error(
                 "Access denied",
@@ -116,6 +123,7 @@ public class GlobalExceptionHandler {
             IllegalArgumentException ex,
             WebRequest request
     ) {
+        log.warn("Invalid argument: {} - Path: {}", ex.getMessage(), request.getDescription(false));
 
         ApiResponse<Void> response = ApiResponse.error(
                 ex.getMessage(),
@@ -132,9 +140,16 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request
     ) {
+        log.error("Unexpected error occurred - Path: {} - Error: {}",
+                request.getDescription(false), ex.getMessage(), ex);
+
+        String message = "An unexpected error occurred";
+        if (log.isDebugEnabled()) {
+            message = ex.getMessage();
+        }
 
         ApiResponse<Void> response = ApiResponse.error(
-                "An unexpected error occurred",
+                message,
                 "INTERNAL_ERROR"
         );
 

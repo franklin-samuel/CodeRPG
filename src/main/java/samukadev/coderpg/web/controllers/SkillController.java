@@ -23,8 +23,10 @@ import samukadev.coderpg.web.model.request.SaveSkillProgressRequest;
 import samukadev.coderpg.web.model.response.SkillHistoryResponse;
 import samukadev.coderpg.web.model.response.SkillResponse;
 import samukadev.coderpg.web.routes.SkillsRoute;
+import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,17 +38,16 @@ public class SkillController {
     private final SaveSkillProgressPort saveSkillProgressPort;
     private final UserRepositoryPort userRepositoryPort;
     private final SkillModelMapper skillModelMapper;
+    private final SecurityUtils securityUtils;
 
     @GetMapping(SkillsRoute.HISTORY)
     public ResponseEntity<ApiResponse<SkillHistoryResponse>> getSkillHistory(
             @AuthenticationPrincipal OAuth2User principal
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
 
         getSkillHistoryPort.execute(context);
 
@@ -78,12 +79,10 @@ public class SkillController {
             @AuthenticationPrincipal OAuth2User principal,
             @PathVariable SkillType type
     ) {
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
 
         getSkillHistoryPort.execute(context);
 
@@ -103,12 +102,10 @@ public class SkillController {
             @AuthenticationPrincipal OAuth2User principal,
             @Valid @RequestBody EquipSkillRequest request
     ) {
-        Long githubId =  principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("skillType", request.getSkillType());
         context.putProperty("skillName", request.getSkillName());
 
@@ -126,12 +123,10 @@ public class SkillController {
             @AuthenticationPrincipal OAuth2User principal,
             @Valid @RequestBody EquipSkillRequest request
     ) {
-        Long githubId =  principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("skillType", request.getSkillType());
         context.putProperty("skillName", request.getSkillName());
 
@@ -150,12 +145,10 @@ public class SkillController {
             @Valid @RequestBody SaveSkillProgressRequest request
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User user = userRepositoryPort.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID userId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("userId", user.getId());
+        context.putProperty("userId", userId);
         context.putProperty("skillType", request.getSkillType());
         context.putProperty("skillName", request.getSkillName());
         context.putProperty("xpToAdd", request.getXpToAdd());

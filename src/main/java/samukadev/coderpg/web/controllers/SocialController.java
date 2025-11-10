@@ -20,6 +20,7 @@ import samukadev.coderpg.web.commons.ApiResponse;
 import samukadev.coderpg.web.mappers.UserModelMapper;
 import samukadev.coderpg.web.model.response.UserResponse;
 import samukadev.coderpg.web.routes.SocialRoute;
+import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,18 +35,17 @@ public class SocialController {
     private final UserFollowRepositoryPort userFollowRepositoryPort;
     private final UserRepositoryPort userRepository;
     private final UserModelMapper userModelMapper;
+    private final SecurityUtils securityUtils;
 
     @PostMapping(SocialRoute.FOLLOW)
     public ResponseEntity<ApiResponse<String>> followUser(
             @AuthenticationPrincipal OAuth2User principal,
             @PathVariable UUID userId
     ) {
-        Long githubId = principal.getAttribute("id");
-        User currentUser = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("followerId", currentUser.getId());
+        context.putProperty("followerId", currentUserId);
         context.putProperty("followingId", userId);
 
         followUserPort.execute(context);
@@ -58,12 +58,10 @@ public class SocialController {
             @AuthenticationPrincipal OAuth2User principal,
             @PathVariable UUID userId
     ) {
-        Long githubId = principal.getAttribute("id");
-        User currentUser = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
 
         Context context = new Context();
-        context.putProperty("followerId", currentUser.getId());
+        context.putProperty("followerId", currentUserId);
         context.putProperty("followingId", userId);
 
         unfollowUserPort.execute(context);
@@ -76,12 +74,10 @@ public class SocialController {
             @AuthenticationPrincipal OAuth2User principal
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User currentUser = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
 
         List<UserFollow> followers = userFollowRepositoryPort
-                .findByFollowingId(currentUser.getId());
+                .findByFollowingId(currentUserId);
 
         List<UserResponse> followerUsers = followers.stream()
                 .map(UserFollow::getFollowerId)
@@ -98,12 +94,10 @@ public class SocialController {
             @AuthenticationPrincipal OAuth2User principal
     ) {
 
-        Long githubId = principal.getAttribute("id");
-        User currentUser = userRepository.findByGitHubId(githubId)
-                .orElseThrow(() -> new BusinessException("User not found"));
+        UUID currentUserId =  securityUtils.getAuthenticatedUserId(principal);
 
         List<UserFollow> following = userFollowRepositoryPort
-                .findByFollowerId(currentUser.getId());
+                .findByFollowerId(currentUserId);
 
         List<UserResponse> followingUsers = following.stream()
                 .map(UserFollow::getFollowingId)
