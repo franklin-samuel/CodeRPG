@@ -11,11 +11,8 @@ import samukadev.coderpg.core.business.skill.EquipSkillPort;
 import samukadev.coderpg.core.business.skill.GetSkillHistoryPort;
 import samukadev.coderpg.core.business.skill.SaveSkillProgressPort;
 import samukadev.coderpg.core.business.skill.UnequipSkillPort;
-import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.SkillHistory;
-import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.enums.SkillType;
-import samukadev.coderpg.domain.exceptions.BusinessException;
 import samukadev.coderpg.web.commons.ApiResponse;
 import samukadev.coderpg.web.mappers.SkillModelMapper;
 import samukadev.coderpg.web.model.request.EquipSkillRequest;
@@ -36,7 +33,6 @@ public class SkillController {
     private final EquipSkillPort equipSkillPort;
     private final UnequipSkillPort unequipSkillPort;
     private final SaveSkillProgressPort saveSkillProgressPort;
-    private final UserRepositoryPort userRepositoryPort;
     private final SkillModelMapper skillModelMapper;
     private final SecurityUtils securityUtils;
 

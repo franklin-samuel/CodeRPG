@@ -33,8 +33,6 @@ public class UserController {
     private final GetUserProfilePort getUserProfilePort;
     private final CompleteUserOnBoardingPort completeUserOnBoardingPort;
     private final UpdateUserBuildPort  updateUserBuildPort;
-    private final UserRepositoryPort userRepositoryPort;
-    private final UserBuildRepositoryPort userBuildRepositoryPort;
     private final UserModelMapper userModelMapper;
     private final SecurityUtils securityUtils;
 

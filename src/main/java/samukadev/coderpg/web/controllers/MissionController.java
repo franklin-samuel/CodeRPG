@@ -9,7 +9,6 @@ import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.mission.CompleteMissionPort;
 import samukadev.coderpg.core.business.mission.GenerateDailyMissionsPort;
 import samukadev.coderpg.core.persistence.UserMissionRepositoryPort;
-import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.UserMission;
 import samukadev.coderpg.domain.enums.MissionType;
 import samukadev.coderpg.domain.exceptions.BusinessException;
@@ -30,7 +29,6 @@ public class MissionController {
     private final GenerateDailyMissionsPort generateDailyMissionsPort;
     private final CompleteMissionPort completeMissionPort;
     private final UserMissionRepositoryPort userMissionRepository;
-    private final UserRepositoryPort userRepository;
     private final MissionModelMapper missionModelMapper;
     private final SecurityUtils securityUtils;
 
