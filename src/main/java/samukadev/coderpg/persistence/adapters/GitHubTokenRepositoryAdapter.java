@@ -30,13 +30,6 @@ public class GitHubTokenRepositoryAdapter implements GitHubTokenRepositoryPort {
     }
 
     @Override
-    public Optional<GitHubToken> findByToken(String token) {
-        return gitHubTokenRepository.findByToken(token)
-                .map(mapper::map);
-    }
-
-
-    @Override
     public Optional<GitHubToken> findLatestByUserId(UUID userId) {
         return gitHubTokenRepository.findLatestByUserId(userId)
                 .map(mapper::map);

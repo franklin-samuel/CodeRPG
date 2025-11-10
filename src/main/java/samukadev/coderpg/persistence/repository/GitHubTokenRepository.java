@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface GitHubTokenRepository extends JpaRepository<GitHubTokenEntity, UUID> {
-    Optional<GitHubTokenEntity> findByToken(final String token);
     Optional<GitHubTokenEntity> findLatestByUserId(final UUID userId);
     Optional<GitHubTokenEntity> findByUserIdAndActiveTrue(final UUID userId);
 
