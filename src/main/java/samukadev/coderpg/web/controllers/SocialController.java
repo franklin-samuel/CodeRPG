@@ -34,7 +34,7 @@ public class SocialController {
     private final UserModelMapper userModelMapper;
     private final SecurityUtils securityUtils;
 
-    @PostMapping(UsersRoute.USER_FOLLOWERS)
+    @PostMapping(UsersRoute.FOLLOW_USER)
     public ResponseEntity<ApiResponse<String>> followUser(
             @PathVariable UUID userId,
             @AuthenticationPrincipal OAuth2User principal
@@ -56,20 +56,15 @@ public class SocialController {
                 .body(ApiResponse.success("User followed successfully"));
     }
 
-    @DeleteMapping(UsersRoute.FOLLOW_RELATIONSHIP)
+    @DeleteMapping(UsersRoute.FOLLOW_USER)
     public ResponseEntity<ApiResponse<String>> unfollowUser(
             @PathVariable UUID userId,
-            @PathVariable UUID followerId,
             @AuthenticationPrincipal OAuth2User principal
     ) {
         UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
 
-        if (!currentUserId.equals(followerId)) {
-            throw new BusinessException("You can only unfollow as yourself");
-        }
-
         Context context = new Context();
-        context.putProperty("followerId", followerId);
+        context.putProperty("followerId", currentUserId);
         context.putProperty("followingId", userId);
 
         unfollowUserPort.execute(context);
@@ -77,10 +72,51 @@ public class SocialController {
         return ResponseEntity.ok(ApiResponse.success("User unfollowed successfully"));
     }
 
+    @GetMapping(UsersRoute.MY_FOLLOWERS)
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getMyFollowers(
+            @AuthenticationPrincipal OAuth2User principal
+    ) {
+        UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
+
+        List<UserFollow> followers = userFollowRepositoryPort
+                .findByFollowingId(currentUserId);
+
+        List<UserResponse> followerUsers = followers.stream()
+                .map(UserFollow::getFollowerId)
+                .map(id -> userRepository.get(id).orElse(null))
+                .filter(Objects::nonNull)
+                .map(userModelMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(followerUsers));
+    }
+
+    @GetMapping(UsersRoute.MY_FOLLOWING)
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getMyFollowing(
+            @AuthenticationPrincipal OAuth2User principal
+    ) {
+        UUID currentUserId = securityUtils.getAuthenticatedUserId(principal);
+
+        List<UserFollow> following = userFollowRepositoryPort
+                .findByFollowerId(currentUserId);
+
+        List<UserResponse> followingUsers = following.stream()
+                .map(UserFollow::getFollowingId)
+                .map(id -> userRepository.get(id).orElse(null))
+                .filter(Objects::nonNull)
+                .map(userModelMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(followingUsers));
+    }
+
     @GetMapping(UsersRoute.USER_FOLLOWERS)
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getFollowers(
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getUserFollowers(
             @PathVariable UUID userId
     ) {
+        userRepository.get(userId)
+                .orElseThrow(() -> new BusinessException("User not found"));
+
         List<UserFollow> followers = userFollowRepositoryPort
                 .findByFollowingId(userId);
 
@@ -95,9 +131,12 @@ public class SocialController {
     }
 
     @GetMapping(UsersRoute.USER_FOLLOWING)
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getFollowing(
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getUserFollowing(
             @PathVariable UUID userId
     ) {
+        userRepository.get(userId)
+                .orElseThrow(() -> new BusinessException("User not found"));
+
         List<UserFollow> following = userFollowRepositoryPort
                 .findByFollowerId(userId);
 
