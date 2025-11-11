@@ -18,6 +18,7 @@ import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.core.security.SaveGitHubTokenPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.enums.ClassType;
+import samukadev.coderpg.domain.exceptions.BusinessException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -115,7 +116,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                     .build();
 
             Context createUserContext = new Context(newUser);
-            user = createUserPort.execute(createUserContext);
+
+            try {
+                user = createUserPort.execute(createUserContext);
+            } catch (BusinessException e) {
+                response.sendRedirect("/login?error=registration_failed");
+                return;
+            }
+
         }
 
         Context saveTokenContext = new Context(user);

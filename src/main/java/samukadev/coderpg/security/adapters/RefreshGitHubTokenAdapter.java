@@ -36,7 +36,7 @@ public class RefreshGitHubTokenAdapter implements RefreshGitHubTokenPort {
             throw new BusinessException("User ID is required");
         }
 
-        GitHubToken currentToken = tokenRepository.findLatestByUserId(userId)
+        GitHubToken currentToken = tokenRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(() -> new BusinessException("No token found for refresh"));
 
         if (currentToken.getGithubRefreshToken() == null) {

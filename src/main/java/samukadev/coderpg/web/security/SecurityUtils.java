@@ -20,10 +20,11 @@ public class SecurityUtils {
             throw new BusinessException("User not authenticated");
         }
 
-        Long githubId = principal.getAttribute("id");
-        if (githubId == null) {
+        Object githubIdObj = principal.getAttribute("github_id");
+        if (githubIdObj == null) {
             throw new BusinessException("Invalid authentication token");
         }
+        Long githubId = ((Number) githubIdObj).longValue();
 
         return userRepository.findByGitHubId(githubId)
                 .orElseThrow(() -> new BusinessException("User not found"));

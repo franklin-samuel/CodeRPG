@@ -30,10 +30,10 @@ public class GitHubTokenEntity extends AbstractEntity<UUID> {
     @Column(name = "github_access_token", nullable = false)
     private String githubAccessToken;
 
-    @Column(name = "github_refresh_token", nullable = false)
+    @Column(name = "github_refresh_token")
     private String githubRefreshToken;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
 }

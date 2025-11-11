@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface GitHubTokenRepositoryPort extends WriteRepositoryPort<GitHubToken> {
-    Optional<GitHubToken> findLatestByUserId(final UUID userId);
+    Optional<GitHubToken> findFirstByUserIdOrderByCreatedAtDesc(final UUID userId);
     Optional<GitHubToken> findByUserIdAndActiveTrue(UUID userId);
     void deactiveAllByUserId(final UUID userId);
 }

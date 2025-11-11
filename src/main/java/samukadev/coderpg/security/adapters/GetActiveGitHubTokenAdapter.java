@@ -28,7 +28,7 @@ public class GetActiveGitHubTokenAdapter implements GetActiveGitHubTokenPort {
             throw new BusinessException("User not found");
         }
 
-        GitHubToken token = repository.findLatestByUserId(userId)
+        GitHubToken token = repository.findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(() -> new BusinessException("No github token found for user"));
 
         if (!token.getActive()) {

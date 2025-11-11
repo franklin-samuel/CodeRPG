@@ -53,7 +53,7 @@ public class GitHubOAuthService {
         revokeTokenPort.execute(context);
     }
 
-    public boolean hasValideToken(UUID userId) {
+    public boolean hasValidToken(UUID userId) {
         Context context =  new Context();
         context.putProperty("userId", userId);
 

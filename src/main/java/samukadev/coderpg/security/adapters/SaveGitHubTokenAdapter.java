@@ -42,13 +42,14 @@ public class SaveGitHubTokenAdapter implements SaveGitHubTokenPort {
         User user = userRepository.get(userId)
                 .orElseThrow(() -> new BusinessException("User not found"));
 
-        Optional<GitHubToken> existingToken = tokenRepository.findLatestByUserId(userId);
+        Optional<GitHubToken> existingToken = tokenRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
         if (existingToken.isPresent()) {
             GitHubToken oldToken = existingToken.get();
             oldToken.setActive(false);
             tokenRepository.save(oldToken);
         }
 
+        tokenRepository.deactiveAllByUserId(userId);
         GitHubToken newToken = GitHubToken.builder()
                 .userId(userId)
                 .githubAccessToken(accessToken)

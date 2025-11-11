@@ -30,8 +30,8 @@ public class GitHubTokenRepositoryAdapter implements GitHubTokenRepositoryPort {
     }
 
     @Override
-    public Optional<GitHubToken> findLatestByUserId(UUID userId) {
-        return gitHubTokenRepository.findLatestByUserId(userId)
+    public Optional<GitHubToken> findFirstByUserIdOrderByCreatedAtDesc(UUID userId) {
+        return gitHubTokenRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .map(mapper::map);
     }
 

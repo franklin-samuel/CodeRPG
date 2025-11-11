@@ -35,7 +35,7 @@ public class RevokeGitHubTokenAdapter implements RevokeGitHubTokenPort {
             throw new BusinessException("User ID is required");
         }
 
-        GitHubToken token = tokenRepository.findLatestByUserId(userId)
+        GitHubToken token = tokenRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .orElseThrow(() -> new BusinessException("No token found to revoke"));
 
         try {
