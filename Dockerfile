@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jdk-jammy
 
 WORKDIR /app
 
-COPY sigen-application/target/sigen.jar app.jar
+COPY target/coderpg-0.0.1-SNAPSHOT.jar app.jar
 
 ARG SPRING_DATASOURCE_URL
 ARG SPRING_DATASOURCE_USERNAME
