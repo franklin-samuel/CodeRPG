@@ -93,8 +93,8 @@ public class SkillController {
         return ResponseEntity.ok(ApiResponse.success((SkillResponse) filteredSkills));
     }
 
-    @PostMapping(SkillsRoute.EQUIP)
-    public ResponseEntity<ApiResponse<SkillResponse>> equipSkill(
+    @PatchMapping(SkillsRoute.EQUIPMENT)
+    public ResponseEntity<ApiResponse<SkillResponse>> updateSkillEquipment(
             @AuthenticationPrincipal OAuth2User principal,
             @Valid @RequestBody EquipSkillRequest request
     ) {
@@ -105,33 +105,22 @@ public class SkillController {
         context.putProperty("skillType", request.getSkillType());
         context.putProperty("skillName", request.getSkillName());
 
-        SkillHistory skill = equipSkillPort.execute(context);
+        SkillHistory skill;
+        String action;
+
+        if (Boolean.TRUE.equals(request.getEquip())) {
+            skill = equipSkillPort.execute(context);
+            action = "equipped";
+        } else {
+            skill = unequipSkillPort.execute(context);
+            action = "unequipped";
+        }
+
         SkillResponse response = skillModelMapper.toResponse(skill);
 
         return ResponseEntity.ok(ApiResponse.success(
                 response,
-                "Skill equipped successfully"
-        ));
-    }
-
-    @PostMapping(SkillsRoute.UNEQUIP)
-    public ResponseEntity<ApiResponse<SkillResponse>> unequipSkill(
-            @AuthenticationPrincipal OAuth2User principal,
-            @Valid @RequestBody EquipSkillRequest request
-    ) {
-        UUID userId = securityUtils.getAuthenticatedUserId(principal);
-
-        Context context = new Context();
-        context.putProperty("userId", userId);
-        context.putProperty("skillType", request.getSkillType());
-        context.putProperty("skillName", request.getSkillName());
-
-        SkillHistory skill = unequipSkillPort.execute(context);
-        SkillResponse response = skillModelMapper.toResponse(skill);
-
-        return ResponseEntity.ok(ApiResponse.success(
-                response,
-                "Skill unequipped successfully"
+                "Skill " + action + " successfully"
         ));
     }
 

@@ -94,7 +94,7 @@ public class MissionController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping(MissionsRoute.COMPLETE)
+    @PatchMapping(MissionsRoute.COMPLETE)
     public ResponseEntity<ApiResponse<MissionResponse>> completeMission(
             @AuthenticationPrincipal OAuth2User principal,
             @PathVariable UUID id

@@ -20,4 +20,7 @@ public class EquipSkillRequest {
     @NotBlank(message = "Skill name is required")
     private String skillName;
 
+    @NotBlank
+    private Boolean equip;
+
 }
