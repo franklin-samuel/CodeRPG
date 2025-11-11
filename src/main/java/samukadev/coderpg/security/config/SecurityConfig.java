@@ -23,10 +23,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/webhooks/**",
+                                "api/auth/**",
                                 "/public/**",
                                 "/health",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/error"
                         ).permitAll()
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
