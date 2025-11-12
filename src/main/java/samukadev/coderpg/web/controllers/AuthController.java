@@ -3,6 +3,7 @@ package samukadev.coderpg.web.controllers;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +24,7 @@ import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
@@ -35,7 +37,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthStatusResponse>> getAuthStatus(
             @AuthenticationPrincipal OAuth2User principal
     ) {
+        log.debug("Auth status check - Principal present: {}", principal != null);
+
         if (principal == null) {
+            log.debug("No authentication principal found");
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(false)
                     .build();
@@ -43,13 +48,18 @@ public class AuthController {
         }
 
         try {
+            log.debug("Principal attributes: {}", principal.getAttributes());
+
             User user = securityUtils.getAuthenticatedUser(principal);
             boolean hasValidToken = gitHubOAuthService.hasValidToken(user.getId());
+
+            log.info("User authenticated: {} ({})", user.getGithubUsername(), user.getId());
 
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(true)
                     .userId(user.getId())
                     .githubUsername(user.getGithubUsername())
+                    .name(user.getName())
                     .avatarUrl(user.getAvatarUrl())
                     .hasValidGitHubToken(hasValidToken)
                     .needsOnBoarding(user.getName() == null || user.getClassType() == null)
@@ -57,6 +67,7 @@ public class AuthController {
 
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (BusinessException e) {
+            log.error("Error getting authenticated user: {}", e.getMessage());
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(false)
                     .build();
@@ -80,7 +91,7 @@ public class AuthController {
                 revokeGitHubTokenPort.execute(context);
 
             } catch (BusinessException e) {
-                throw new BusinessException(e.getMessage());
+                log.error("Error during logout: {}", e.getMessage());
             }
         }
 
@@ -104,5 +115,4 @@ public class AuthController {
                     .body(ApiResponse.error(e.getMessage(), "REFRESH_FAILED"));
         }
     }
-
 }

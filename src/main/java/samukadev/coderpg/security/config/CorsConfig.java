@@ -8,6 +8,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class CorsConfig {
@@ -25,14 +26,16 @@ public class CorsConfig {
                 "GET",  "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
 
+        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setAllowCredentials(true);
+
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "X-Total_Count",
                 "X-Page",
                 "X-Per-Page"
         ));
-
-        configuration.setAllowCredentials(true);
 
         configuration.setMaxAge(3600L);
 

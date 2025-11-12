@@ -20,7 +20,7 @@ public class SecurityUtils {
             throw new BusinessException("User not authenticated");
         }
 
-        Object githubIdObj = principal.getAttribute("github_id");
+        Object githubIdObj = principal.getAttribute("id");
         if (githubIdObj == null) {
             throw new BusinessException("Invalid authentication token");
         }

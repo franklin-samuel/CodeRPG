@@ -26,7 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/webhooks/**",
-                                "api/auth/**",
+                                "api/auth/status",
                                 "/public/**",
                                 "/health",
                                 "/login",
