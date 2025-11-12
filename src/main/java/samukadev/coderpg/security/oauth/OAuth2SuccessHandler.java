@@ -126,7 +126,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         }
 
-        Context saveTokenContext = new Context(user);
+        Context saveTokenContext = new Context();
         saveTokenContext.putProperty("userId", user.getId());
         saveTokenContext.putProperty("accessToken", token);
         saveTokenContext.putProperty("refreshToken", refreshToken);
