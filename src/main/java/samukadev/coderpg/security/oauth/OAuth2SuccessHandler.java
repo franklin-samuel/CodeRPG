@@ -4,6 +4,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -26,6 +27,7 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -94,7 +96,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             user.setGithubFollowing(following);
             user.setLastSyncAt(LocalDateTime.now());
 
-            userRepository.save(user);
+            user = userRepository.save(user);
         } else {
             isNewUser = true;
 
@@ -123,7 +125,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 response.sendRedirect("/login?error=registration_failed");
                 return;
             }
-
         }
 
         Context saveTokenContext = new Context();
@@ -132,9 +133,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         saveTokenContext.putProperty("refreshToken", refreshToken);
         saveTokenContext.putProperty("expiresAt", expiresAt);
 
-        saveGitHubTokenPort.execute(saveTokenContext);
+        try {
+            saveGitHubTokenPort.execute(saveTokenContext);
+        } catch (BusinessException e) {
+            throw e;
+        }
 
-        String frontendUrl = System.getenv("FRONTEND_URL");
+        String frontendUrl = System.getenv().getOrDefault("FRONTEND_URL", "http://localhost:5173");
         String redirectUrl = isNewUser ? frontendUrl + "/onboarding" : frontendUrl + "/";
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }

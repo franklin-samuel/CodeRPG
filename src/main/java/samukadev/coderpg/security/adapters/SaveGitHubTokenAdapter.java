@@ -52,6 +52,7 @@ public class SaveGitHubTokenAdapter implements SaveGitHubTokenPort {
         tokenRepository.deactiveAllByUserId(userId);
         GitHubToken newToken = GitHubToken.builder()
                 .userId(userId)
+                .user(user)
                 .githubAccessToken(accessToken)
                 .githubRefreshToken(refreshToken)
                 .expiresAt(expiresAt)

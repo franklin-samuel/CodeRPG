@@ -15,6 +15,7 @@ import java.util.UUID;
 public class GitHubToken extends AbstractDomain {
 
     private UUID userId;
+    private User user;
     private String githubAccessToken;
     private String githubRefreshToken;
     private LocalDateTime expiresAt;

@@ -13,9 +13,10 @@ import samukadev.coderpg.persistence.model.GitHubTokenEntity;
 public interface GitHubTokenMapper {
 
     @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "user", source = "user")
     GitHubToken map(GitHubTokenEntity source);
 
-    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "user", source = "user")
     GitHubTokenEntity map(GitHubToken source);
 
 }
