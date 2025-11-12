@@ -134,7 +134,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         saveGitHubTokenPort.execute(saveTokenContext);
 
-        String redirectUrl = isNewUser ? "/onboarding" : "/home";
+        String redirectUrl = isNewUser ? "http://localhost:5173/onboarding" : "http://localhost:5173/";
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 
