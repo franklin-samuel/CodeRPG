@@ -32,7 +32,7 @@ public class SaveGitHubTokenAdapter implements SaveGitHubTokenPort {
         LocalDateTime expiresAt = context.getProperty("expiresAt", LocalDateTime.class);
 
         if (userId == null) {
-            throw new BusinessException("User ID is required");
+            throw new BusinessException("User ID is required!");
         }
 
         if (accessToken == null || accessToken.isBlank()) {
