@@ -1,6 +1,5 @@
 package samukadev.coderpg.web.model.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -20,8 +19,5 @@ public class CompleteOnBoardingRequest {
 
     @NotNull(message = "ClassType is required")
     private ClassType classType;
-
-    @Email(message = "Invalid email format")
-    private String email;
 
 }

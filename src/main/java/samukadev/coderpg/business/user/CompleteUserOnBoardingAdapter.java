@@ -25,7 +25,6 @@ public class CompleteUserOnBoardingAdapter implements CompleteUserOnBoardingPort
         UUID userId = context.getProperty("userId", UUID.class);
         String name = context.getProperty("name", String.class);
         ClassType classType = context.getProperty("classType", ClassType.class);
-        String email = context.getProperty("email", String.class);
 
         if (userId == null) {
             throw new BusinessException("User ID is required");
@@ -41,13 +40,6 @@ public class CompleteUserOnBoardingAdapter implements CompleteUserOnBoardingPort
 
         User user = repository.get(userId)
                 .orElseThrow(() -> new BusinessException("User not found"));
-
-        if (email != null && !email.isBlank()) {
-            if (repository.existsByEmail(email)) {
-                throw new BusinessException("Email already exists");
-            }
-            user.setEmail(email);
-        }
 
         user.setName(name);
         user.setClassType(classType);

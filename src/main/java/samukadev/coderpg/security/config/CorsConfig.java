@@ -30,9 +30,9 @@ public class CorsConfig {
 
         configuration.setAllowCredentials(true);
 
-        configuration.setAllowedHeaders(Arrays.asList(
+        configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
-                "X-Total_Count",
+                "X-Total-Count",
                 "X-Page",
                 "X-Per-Page"
         ));

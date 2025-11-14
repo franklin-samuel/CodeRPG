@@ -54,7 +54,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         Long githubId = ((Number) attributes.get("id")).longValue();
         String githubUsername = (String) attributes.get("login");
-        String name = (String) attributes.get("name");
         String email = (String) attributes.get("email");
         String avatarUrl = (String) attributes.get("avatar_url");
         String bio = (String) attributes.get("bio");
@@ -103,13 +102,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             User newUser = User.builder()
                     .githubId(githubId)
                     .githubUsername(githubUsername)
-                    .name(name)
+                    .name(null)
                     .email(email)
                     .avatarUrl(avatarUrl)
                     .bio(bio)
                     .location(location)
                     .website(website)
-                    .classType(ClassType.FULLSTACK)
+                    .classType(null)
                     .githubPublicRepos(publicRepos)
                     .githubFollowers(followers)
                     .githubFollowing(following)

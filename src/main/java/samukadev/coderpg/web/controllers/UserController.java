@@ -75,7 +75,6 @@ public class UserController {
         context.putProperty("userId", userId);
         context.putProperty("name", request.getName());
         context.putProperty("classType", request.getClassType());
-        context.putProperty("email", request.getEmail());
 
         User updatedUser = completeUserOnBoardingPort.execute(context);
         UserResponse response = userModelMapper.toResponse(updatedUser);
