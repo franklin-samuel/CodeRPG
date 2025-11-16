@@ -28,3 +28,9 @@ jobs:
       - name: Push Image Docker
         run: docker push samuelfranklindev/coderpg
 
+      - name: Trigger Render Deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK&imgURL=docker.io%2Fsamuelfranklindev%2Fcoderpg%3A${TAG}"
+
