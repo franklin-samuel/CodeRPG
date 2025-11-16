@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
 
+env:
+  IMAGE: docker.io/samuelfranklindev/coderpg
+  TAG: sha-${{ github.sha }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
