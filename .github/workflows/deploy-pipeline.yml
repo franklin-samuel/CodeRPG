@@ -2,6 +2,8 @@ name: Deploy Backend
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 env:
   IMAGE: docker.io/samuelfranklindev/coderpg
