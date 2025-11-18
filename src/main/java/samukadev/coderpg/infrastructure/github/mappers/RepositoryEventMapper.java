@@ -1,7 +1,6 @@
 package samukadev.coderpg.infrastructure.github.mappers;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import samukadev.coderpg.domain.enums.GitHubEventType;
 import samukadev.coderpg.domain.github.event.RepositoryEvent;
