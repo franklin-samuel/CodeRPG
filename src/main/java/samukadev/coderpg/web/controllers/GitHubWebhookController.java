@@ -4,12 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.*;
+import samukadev.coderpg.domain.enums.GitHubEventType;
 import samukadev.coderpg.domain.exceptions.GitHubWebhookException;
+import samukadev.coderpg.domain.github.GitHubWebhookPayload;
 import samukadev.coderpg.infrastructure.github.config.GitHubProperties;
+import samukadev.coderpg.infrastructure.github.webhook.GitHubWebhookHandler;
 import samukadev.coderpg.web.commons.ApiResponse;
 import samukadev.coderpg.web.routes.WebhooksRoute;
 
@@ -27,6 +28,7 @@ public class GitHubWebhookController {
 
     private final GitHubProperties gitHubProperties;
     private final ObjectMapper objectMapper;
+    private final GitHubWebhookHandler webhookHandler;
 
     @PostMapping(WebhooksRoute.GITHUB)
     public ResponseEntity<ApiResponse<String>> handleGitHubWebhook(
@@ -44,16 +46,38 @@ public class GitHubWebhookController {
             @SuppressWarnings("unchecked")
             Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
 
-            log.debug("Webhook payload keys: {}", payloadMap.keySet());
+            GitHubWebhookPayload webhookPayload = GitHubWebhookPayload.builder()
+                    .eventType(eventType)
+                    .deliveryId(deliveryId)
+                    .signature(signature)
+                    .payload(payloadMap)
+                    .rawPayload(payload)
+                    .build();
+
+            processWebhookAsync(webhookPayload);
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Webhook received successfully",
-                    "Event: " + eventType
+                    "Webhook accepted",
+                    "Processing event: " + eventType
             ));
-        } catch (Exception e) {
-            throw new GitHubWebhookException("Webhook received failure: " + e.getMessage());
-        }
 
+        } catch (Exception e) {
+            log.error("Error processing webhook: {}", e.getMessage(), e);
+            throw new GitHubWebhookException("Failed to process webhook: " + e.getMessage(), e);
+        }
+    }
+
+    @Async
+    public void processWebhookAsync(GitHubWebhookPayload payload) {
+        try {
+            GitHubEventType eventType = GitHubEventType.fromValue(payload.getEventType());
+
+            webhookHandler.processWebhook(payload, payload.getEventType());
+
+        } catch (Exception e) {
+            log.error("Error in async webhook processing - Delivery: {}, Error: {}",
+                    payload.getDeliveryId(), e.getMessage(), e);
+        }
     }
 
     private boolean validateSignature(String payload, String signature) {
@@ -102,5 +126,4 @@ public class GitHubWebhookController {
         }
         return hexString.toString();
     }
-
 }
