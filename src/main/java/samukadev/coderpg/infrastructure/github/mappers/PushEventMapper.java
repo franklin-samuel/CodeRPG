@@ -28,6 +28,11 @@ public class PushEventMapper {
             String after = (String) payload.get("after");
             Boolean isForce = (Boolean) payload.getOrDefault("forced", false);
 
+            String repositoryLanguage = null;
+            if (repository != null) {
+                repositoryLanguage = (String) repository.get("language");
+            }
+
             List<GitHubCommit> commitList = new ArrayList<>();
             if (commits != null) {
                 for (Map<String, Object> commitData : commits) {
@@ -51,6 +56,7 @@ public class PushEventMapper {
                     .commits(commitList)
                     .commitsCount(commitList.size())
                     .isForce(isForce)
+                    .repositoryLanguage(repositoryLanguage)
                     .build();
 
         } catch (Exception e) {
