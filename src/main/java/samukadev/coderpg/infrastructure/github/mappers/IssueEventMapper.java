@@ -21,10 +21,16 @@ public class IssueEventMapper {
 
             String action = (String) payload.get("action");
 
+            String repositoryLanguage = null;
+            if (repository != null) {
+                repositoryLanguage = (String) repository.get("language");
+            }
+
             return IssueEvent.builder()
                     .eventId(String.valueOf(issue.get("id")))
                     .eventType(GitHubEventType.ISSUES)
                     .repositoryFullName((String) repository.get("full_name"))
+                    .repositoryLanguage(repositoryLanguage)
                     .senderUsername((String) sender.get("login"))
                     .senderGithubId(((Number) sender.get("id")).longValue())
                     .occurredAt(LocalDateTime.now())

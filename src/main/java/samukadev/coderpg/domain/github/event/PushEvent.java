@@ -23,7 +23,6 @@ public class PushEvent extends GitHubEvent {
     private List<GitHubCommit> commits = new ArrayList<>();
     private Integer commitsCount;
     private Boolean isForce;
-    private String repositoryLanguage;
 
     @Override
     public void validate() {

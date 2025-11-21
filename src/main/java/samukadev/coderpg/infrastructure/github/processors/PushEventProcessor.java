@@ -2,6 +2,7 @@ package samukadev.coderpg.infrastructure.github.processors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.xp.CalculateXpMultiplierPort;
 import samukadev.coderpg.core.business.xp.ProcessXpEventPort;
@@ -18,6 +19,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PushEventProcessor implements PushEventProcessorPort {
 
     private final UserRepositoryPort userRepository;

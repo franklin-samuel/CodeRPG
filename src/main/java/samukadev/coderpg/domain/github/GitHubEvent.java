@@ -14,6 +14,7 @@ public abstract class GitHubEvent {
     private String eventId;
     private GitHubEventType eventType;
     private String repositoryFullName;
+    private String repositoryLanguage;
     private String senderUsername;
     private Long senderGithubId;
     private LocalDateTime occurredAt;

@@ -18,7 +18,6 @@ public class PullRequestEvent extends GitHubEvent {
     private String action;
     private GitHubPullRequest pullRequest;
     private Boolean wasMerged;
-    private String repositoryLanguage;
 
     @Override
     public void validate() {
