@@ -24,10 +24,16 @@ public class RepositoryEventMapper {
 
             GitHubRepository repository = mapRepository(repoData);
 
+            String repositoryLanguage = null;
+            if (repository != null) {
+                repositoryLanguage = (String) repository.getLanguage();
+            }
+
             return RepositoryEvent.builder()
                     .eventId(String.valueOf(repoData.get("id")))
                     .eventType(GitHubEventType.REPOSITORY)
                     .repositoryFullName((String) repoData.get("full_name"))
+                    .repositoryLanguage(repositoryLanguage)
                     .senderUsername((String) sender.get("login"))
                     .senderGithubId(((Number) sender.get("id")).longValue())
                     .occurredAt(LocalDateTime.now())
