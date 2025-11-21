@@ -48,7 +48,7 @@ public class UpdateSkillProgress {
         int previousSkillLevel = skill.getLevel();
         skill.setXp(skill.getXp() + xpEvent.getXpAmount());
         int newSkillLevel = calculateSkillLevel(skill.getXp());
-        skill.setLevel(newSkillLevel - previousSkillLevel);
+        skill.setLevel(newSkillLevel);
 
         skillHistoryRepositoryPort.save(skill);
 

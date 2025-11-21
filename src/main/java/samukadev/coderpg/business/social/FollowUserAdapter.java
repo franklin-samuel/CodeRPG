@@ -20,7 +20,7 @@ public class FollowUserAdapter implements FollowUserPort {
 
     private final UserFollowRepositoryPort followRepository;
     private final UserRepositoryPort userRepository;
-    private final UserFollowRepository userFollowRepository;
+    private final UserFollowRepositoryPort userFollowRepository;
 
     @Override
     public UserFollow execute(final Context context) {

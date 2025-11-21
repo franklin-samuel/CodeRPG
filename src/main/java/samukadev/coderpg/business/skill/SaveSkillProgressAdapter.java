@@ -50,7 +50,7 @@ public class SaveSkillProgressAdapter implements SaveSkillProgressPort {
                     .level(1)
                     .xp(0)
                     .isEquipped(false)
-                    .firstEquippedAt(LocalDateTime.now())
+                    .firstEquippedAt(null)
                     .active(true)
                     .build();
         }

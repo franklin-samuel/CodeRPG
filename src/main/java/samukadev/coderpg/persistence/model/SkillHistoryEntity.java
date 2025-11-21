@@ -57,7 +57,7 @@ public class SkillHistoryEntity extends AbstractEntity<UUID> {
     @Column(name = "is_equipped", nullable = false)
     private Boolean isEquipped;
 
-    @Column(name = "first_equipped_at", nullable = false)
+    @Column(name = "first_equipped_at")
     private LocalDateTime firstEquippedAt;
 
     @Column(name = "last_equipped_at")
