@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
-import samukadev.coderpg.domain.enums.GitHubEventType;
+import samukadev.coderpg.core.integration.github.GitHubWebHookHandlerPort;
 import samukadev.coderpg.domain.exceptions.GitHubWebhookException;
 import samukadev.coderpg.domain.github.GitHubWebhookPayload;
 import samukadev.coderpg.infrastructure.github.config.GitHubProperties;
-import samukadev.coderpg.infrastructure.github.webhook.GitHubWebhookHandler;
 import samukadev.coderpg.web.commons.ApiResponse;
 import samukadev.coderpg.web.routes.WebhooksRoute;
 
@@ -28,7 +26,7 @@ public class GitHubWebhookController {
 
     private final GitHubProperties gitHubProperties;
     private final ObjectMapper objectMapper;
-    private final GitHubWebhookHandler webhookHandler;
+    private final GitHubWebHookHandlerPort webhookHandler;
 
     @PostMapping(WebhooksRoute.GITHUB)
     public ResponseEntity<ApiResponse<String>> handleGitHubWebhook(
@@ -54,7 +52,7 @@ public class GitHubWebhookController {
                     .rawPayload(payload)
                     .build();
 
-            processWebhookAsync(webhookPayload);
+            webhookHandler.processWebhook(webhookPayload, eventType);
 
             return ResponseEntity.ok(ApiResponse.success(
                     "Webhook accepted",
@@ -64,19 +62,6 @@ public class GitHubWebhookController {
         } catch (Exception e) {
             log.error("Error processing webhook: {}", e.getMessage(), e);
             throw new GitHubWebhookException("Failed to process webhook: " + e.getMessage(), e);
-        }
-    }
-
-    @Async
-    public void processWebhookAsync(GitHubWebhookPayload payload) {
-        try {
-            GitHubEventType eventType = GitHubEventType.fromValue(payload.getEventType());
-
-            webhookHandler.processWebhook(payload, payload.getEventType());
-
-        } catch (Exception e) {
-            log.error("Error in async webhook processing - Delivery: {}, Error: {}",
-                    payload.getDeliveryId(), e.getMessage(), e);
         }
     }
 
