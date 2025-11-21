@@ -24,6 +24,11 @@ public class PullRequestEventMapper {
             String action = (String) payload.get("action");
             Boolean wasMerged = (Boolean) prData.getOrDefault("merged", false);
 
+            String repositoryLanguage = null;
+            if (repository != null) {
+                repositoryLanguage = (String) repository.get("language");
+            }
+
             GitHubPullRequest pullRequest = mapPullRequest(prData);
 
             return PullRequestEvent.builder()
@@ -36,6 +41,7 @@ public class PullRequestEventMapper {
                     .action(action)
                     .pullRequest(pullRequest)
                     .wasMerged(wasMerged)
+                    .repositoryLanguage(repositoryLanguage)
                     .build();
 
         } catch (Exception e) {

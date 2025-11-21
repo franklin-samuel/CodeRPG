@@ -27,7 +27,7 @@ public class PushEventProcessor implements PushEventProcessorPort {
     private static final int BASE_XP_PER_COMMIT = 50;
 
     @Override
-    public Boolean execute(Context context) {
+    public Boolean execute(final Context context) {
         PushEvent event = context.getData(PushEvent.class);
         return processEvent(event);
     }
