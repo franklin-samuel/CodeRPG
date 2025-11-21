@@ -7,6 +7,7 @@ import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.xp.CalculateXpMultiplierPort;
 import samukadev.coderpg.core.business.xp.ProcessXpEventPort;
 import samukadev.coderpg.core.integration.github.event.PullRequestEventProcessorPort;
+import samukadev.coderpg.core.persistence.UserBuildRepositoryPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.XpEvent;
@@ -14,6 +15,7 @@ import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.enums.XpSource;
 import samukadev.coderpg.domain.github.event.PullRequestEvent;
 import samukadev.coderpg.infrastructure.github.mappers.LanguageMapper;
+import samukadev.coderpg.infrastructure.github.utils.ResolveSkillType;
 
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ public class PullRequestEventProcessor implements PullRequestEventProcessorPort 
     private final UserRepositoryPort userRepository;
     private final CalculateXpMultiplierPort calculateXpMultiplierPort;
     private final ProcessXpEventPort processXpEventPort;
+    private final UserBuildRepositoryPort userBuildRepositoryPort;
 
     private static final int XP_PR_OPENED = 75;
     private static final int XP_PR_MERGED = 150;
@@ -52,6 +55,8 @@ public class PullRequestEventProcessor implements PullRequestEventProcessorPort 
 
         if (skillName == null) return false;
 
+        ResolveSkillType.SkillTypeResolution resolution = ResolveSkillType.execute(user.getId(), skillName, userBuildRepositoryPort);
+
         XpSource xpSource = determineXpSource(event.getAction(), event.getWasMerged());
         int xpAmount = calculateXpAmount(event.getAction(), event.getWasMerged());
 
@@ -60,8 +65,8 @@ public class PullRequestEventProcessor implements PullRequestEventProcessorPort 
                 .xpSource(xpSource)
                 .sourceDetail("PR #" + event.getPullRequest().getNumber() + " - " + event.getAction())
                 .xpAmount(xpAmount)
-                .skillType(SkillType.PRIMARY_LANGUAGE)
-                .skillName(skillName)
+                .skillType(resolution.hasSkill() ? resolution.skillType() : null)
+                .skillName(resolution.hasSkill() ? resolution.skillName() : null)
                 .githubEventId(event.getEventId())
                 .githubRepo(event.getRepositoryFullName())
                 .githubUrl("https://github.com/" + event.getRepositoryFullName() + "/pull/" + event.getPullRequest().getNumber())

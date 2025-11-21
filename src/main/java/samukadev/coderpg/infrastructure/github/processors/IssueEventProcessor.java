@@ -7,6 +7,7 @@ import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.xp.CalculateXpMultiplierPort;
 import samukadev.coderpg.core.business.xp.ProcessXpEventPort;
 import samukadev.coderpg.core.integration.github.event.IssueEventProcessorPort;
+import samukadev.coderpg.core.persistence.UserBuildRepositoryPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.XpEvent;
@@ -14,6 +15,7 @@ import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.enums.XpSource;
 import samukadev.coderpg.domain.github.event.IssueEvent;
 import samukadev.coderpg.infrastructure.github.mappers.LanguageMapper;
+import samukadev.coderpg.infrastructure.github.utils.ResolveSkillType;
 
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ public class IssueEventProcessor implements IssueEventProcessorPort {
     private final UserRepositoryPort userRepository;
     private final CalculateXpMultiplierPort calculateXpMultiplierPort;
     private final ProcessXpEventPort processXpEventPort;
+    private final UserBuildRepositoryPort userBuildRepository;
 
     private static final int XP_ISSUE_OPENED = 50;
     private static final int XP_ISSUE_CLOSED = 75;
@@ -56,6 +59,8 @@ public class IssueEventProcessor implements IssueEventProcessorPort {
             return false;
         }
 
+        ResolveSkillType.SkillTypeResolution resolution = ResolveSkillType.execute(user.getId(), skillName, userBuildRepository);
+
         XpSource xpSource = determineXpSource(event.getAction());
         int xpAmount = calculateXpAmount(event.getAction());
 
@@ -64,8 +69,8 @@ public class IssueEventProcessor implements IssueEventProcessorPort {
                 .xpSource(xpSource)
                 .sourceDetail("Issue #" + event.getIssueNumber() + " - " + event.getAction())
                 .xpAmount(xpAmount)
-                .skillType(SkillType.PRIMARY_LANGUAGE)
-                .skillName(skillName)
+                .skillType(resolution.hasSkill() ? resolution.skillType() : null)
+                .skillName(resolution.hasSkill() ? resolution.skillName() : null)
                 .githubEventId(event.getEventId())
                 .githubRepo(event.getRepositoryFullName())
                 .githubUrl("https://github.com/" + event.getRepositoryFullName() + "/issues/" + event.getIssueNumber())

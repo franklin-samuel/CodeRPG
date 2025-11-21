@@ -7,6 +7,7 @@ import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.xp.CalculateXpMultiplierPort;
 import samukadev.coderpg.core.business.xp.ProcessXpEventPort;
 import samukadev.coderpg.core.integration.github.event.PushEventProcessorPort;
+import samukadev.coderpg.core.persistence.UserBuildRepositoryPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.XpEvent;
@@ -14,6 +15,7 @@ import samukadev.coderpg.domain.enums.SkillType;
 import samukadev.coderpg.domain.enums.XpSource;
 import samukadev.coderpg.domain.github.event.PushEvent;
 import samukadev.coderpg.infrastructure.github.mappers.LanguageMapper;
+import samukadev.coderpg.infrastructure.github.utils.ResolveSkillType;
 
 import java.util.Optional;
 
@@ -25,6 +27,7 @@ public class PushEventProcessor implements PushEventProcessorPort {
     private final UserRepositoryPort userRepository;
     private final CalculateXpMultiplierPort calculateXpMultiplierPort;
     private final ProcessXpEventPort processXpEventPort;
+    private final UserBuildRepositoryPort userBuildRepository;
 
     private static final int BASE_XP_PER_COMMIT = 50;
 
@@ -51,6 +54,8 @@ public class PushEventProcessor implements PushEventProcessorPort {
             return false;
         }
 
+        ResolveSkillType.SkillTypeResolution resolution = ResolveSkillType.execute(user.getId(), skillName, userBuildRepository);
+
         int totalCommits = event.getCommitsCount() != null ? event.getCommitsCount() : event.getCommits().size();
 
         for (int i = 0; i < totalCommits; i++) {
@@ -63,8 +68,8 @@ public class PushEventProcessor implements PushEventProcessorPort {
                     .xpSource(XpSource.COMMIT)
                     .sourceDetail("Push to " + event.getRef())
                     .xpAmount(BASE_XP_PER_COMMIT)
-                    .skillType(SkillType.PRIMARY_LANGUAGE)
-                    .skillName(skillName)
+                    .skillType(resolution.hasSkill() ? resolution.skillType() : null)
+                    .skillName(resolution.hasSkill() ? resolution.skillName() : null)
                     .githubEventId(commitSha)
                     .githubUrl(buildCommitUrl(event.getRepositoryFullName(), commitSha))
                     .createdAt(event.getOccurredAt())
