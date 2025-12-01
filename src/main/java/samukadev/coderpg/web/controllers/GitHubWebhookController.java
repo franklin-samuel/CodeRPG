@@ -74,12 +74,14 @@ public class GitHubWebhookController {
 
     private boolean validateSignature(String payload, String signature) {
         if (signature == null || !signature.startsWith("sha256=")) {
+            log.info("Falha de validação: Assinatura nula ou formato incorreto. Signature: {}", signature);
             return false;
         }
 
         try {
             String webhookSecret = gitHubProperties.getWebhookSecret();
             if (webhookSecret == null || webhookSecret.isBlank()) {
+                log.error("Falha de validação: Webhook Secret não configurado/nulo.");
                 return false;
             }
 
@@ -103,6 +105,7 @@ public class GitHubWebhookController {
             return isValid;
 
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            log.error("Hash algorithm error.", e);
             return false;
         }
     }
