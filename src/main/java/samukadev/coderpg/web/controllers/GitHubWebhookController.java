@@ -36,6 +36,8 @@ public class GitHubWebhookController {
             @RequestHeader(value = "X-GitHub-Delivery", required = false) String deliveryId
     ) {
 
+        log.info("Payload: {}", payload);
+
         if (!validateSignature(payload, signature)) {
             throw new GitHubWebhookException("Invalid webhook signature!");
         }

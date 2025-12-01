@@ -43,11 +43,6 @@ public class PushEventProcessor implements PushEventProcessorPort {
         try {
             log.info("Processing push event for repository: {}", event.getRepositoryFullName());
 
-            if (event == null) {
-                log.error("Push event is null");
-                return false;
-            }
-
             event.validate();
 
             Optional<User> userOpt = userRepository.findByGitHubId(event.getSenderGithubId());
