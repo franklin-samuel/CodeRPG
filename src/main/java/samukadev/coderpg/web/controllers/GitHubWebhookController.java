@@ -1,7 +1,6 @@
 package samukadev.coderpg.web.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +14,10 @@ import samukadev.coderpg.web.routes.WebhooksRoute;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -34,13 +30,11 @@ public class GitHubWebhookController {
 
     @PostMapping(WebhooksRoute.GITHUB)
     public ResponseEntity<ApiResponse<String>> handleGitHubWebhook(
-            HttpServletRequest request,
+            @RequestBody String payload,
             @RequestHeader("X-GitHub-Event") String eventType,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature,
             @RequestHeader(value = "X-GitHub-Delivery", required = false) String deliveryId
     ) {
-        String payload = getRawPayload(request);
-
         log.info("Payload: {}", payload);
 
         if (!validateSignature(payload, signature)) {
@@ -120,15 +114,5 @@ public class GitHubWebhookController {
             hexString.append(hex);
         }
         return hexString.toString();
-    }
-
-    private String getRawPayload(HttpServletRequest request) {
-        try {
-            return request.getReader().lines()
-                    .collect(Collectors.joining());
-        } catch (IOException e) {
-            log.error("Failed to read raw payload from request", e);
-            return null;
-        }
     }
 }
