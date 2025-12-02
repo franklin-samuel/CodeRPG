@@ -21,6 +21,7 @@ import samukadev.coderpg.infrastructure.github.mappers.*;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
@@ -41,7 +42,8 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
     public Boolean execute(Context context) {
         GitHubWebhookPayload payload = context.getData(GitHubWebhookPayload.class);
         String eventType = context.getProperty("eventType", String.class);
-        return processWebhook(payload, eventType);
+        processWebhook(payload, eventType);
+        return null;
     }
 
     @Override
@@ -51,12 +53,13 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000, multiplier = 2)
     )
-    public Boolean processWebhook(GitHubWebhookPayload payload, String eventType) {
+    public void processWebhook(GitHubWebhookPayload payload, String eventType) {
         try {
             GitHubEventType type = GitHubEventType.fromValue(eventType);
 
             if (type == GitHubEventType.UNKNOWN) {
-                return false;
+                log.warn("Unknown event type: {}", eventType);
+                return;
             }
 
             Map<String, Object> payloadMap = payload.getPayload();
@@ -64,28 +67,34 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
             @SuppressWarnings("unchecked")
             Map<String, Object> sender = (Map<String, Object>) payloadMap.get("sender");
             if (sender == null) {
-                return false;
+                log.warn("No sender in webhook payload");
+                return;
             }
 
             Long senderGitHubId = ((Number) sender.get("id")).longValue();
 
             Optional<User> userOpt = userRepository.findByGitHubId(senderGitHubId);
             if (userOpt.isEmpty()) {
-                return false;
+                log.info("User not found for GitHub ID: {}", senderGitHubId);
+                return;
             }
 
             GitHubEvent event = mapEvent(type, payloadMap);
             if (event == null) {
-                return false;
+                log.warn("Could not map event of type: {}", type);
+                return;
             }
 
             event.validate();
 
-            return processEvent(type, event);
+            processEvent(type, event);
+
+            log.info("Successfully processed {} event for user {}", type, senderGitHubId);
 
         } catch (IllegalArgumentException e) {
-            return false;
+            log.error("Validation error processing webhook: {}", e.getMessage());
         } catch (Exception e) {
+            log.error("Error processing webhook: {}", e.getMessage(), e);
             throw new GitHubWebhookException("Webhook processing failed", e);
         }
     }
@@ -101,25 +110,13 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
         };
     }
 
-    private boolean processEvent(GitHubEventType type, GitHubEvent event) {
-        return switch (type) {
-            case PUSH -> {
-                Context ctx = new Context(event);
-                yield pushEventProcessor.processEvent((PushEvent) event);
-            }
-            case PULL_REQUEST -> {
-                yield pullRequestEventProcessor.processEvent((PullRequestEvent) event);
-            }
-            case ISSUES -> {
-                yield issueEventProcessor.processEvent((IssueEvent) event);
-            }
-            case STAR -> {
-                yield starEventProcessor.processEvent((StarEvent) event);
-            }
-            case REPOSITORY -> {
-                yield repositoryEventProcessor.processEvent((RepositoryEvent) event);
-            }
-            default -> false;
-        };
+    private void processEvent(GitHubEventType type, GitHubEvent event) {
+        switch (type) {
+            case PUSH -> pushEventProcessor.processEvent((PushEvent) event);
+            case PULL_REQUEST -> pullRequestEventProcessor.processEvent((PullRequestEvent) event);
+            case ISSUES -> issueEventProcessor.processEvent((IssueEvent) event);
+            case STAR -> starEventProcessor.processEvent((StarEvent) event);
+            case REPOSITORY -> repositoryEventProcessor.processEvent((RepositoryEvent) event);
+        }
     }
 }

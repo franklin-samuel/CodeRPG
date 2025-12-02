@@ -35,9 +35,10 @@ public class GitHubWebhookController {
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature,
             @RequestHeader(value = "X-GitHub-Delivery", required = false) String deliveryId
     ) {
-        log.info("Payload: {}", payload);
+        log.info("Received GitHub webhook - Event: {}, Delivery: {}", eventType, deliveryId);
 
         if (!validateSignature(payload, signature)) {
+            log.error("Webhook signature validation failed");
             throw new GitHubWebhookException("Invalid webhook signature!");
         }
 
@@ -56,8 +57,8 @@ public class GitHubWebhookController {
             webhookHandler.processWebhook(webhookPayload, eventType);
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Webhook accepted",
-                    "Processing event: " + eventType
+                    "Webhook accepted for processing",
+                    "Event: " + eventType
             ));
 
         } catch (Exception e) {

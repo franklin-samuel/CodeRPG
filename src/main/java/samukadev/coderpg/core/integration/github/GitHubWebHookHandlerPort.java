@@ -5,6 +5,6 @@ import samukadev.coderpg.domain.github.GitHubWebhookPayload;
 
 public interface GitHubWebHookHandlerPort extends Command<Boolean> {
 
-    Boolean processWebhook(GitHubWebhookPayload payload, String eventType);
+    void processWebhook(GitHubWebhookPayload payload, String eventType);
 
 }
