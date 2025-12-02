@@ -67,7 +67,7 @@ public class AuthController {
 
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (BusinessException e) {
-            log.error("Error getting authenticated user: {}", e.getMessage());
+            log.error("Error getting authenticated user: {}!", e.getMessage());
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(false)
                     .build();
