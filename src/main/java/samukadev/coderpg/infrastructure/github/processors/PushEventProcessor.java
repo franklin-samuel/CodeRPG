@@ -10,6 +10,7 @@ import samukadev.coderpg.core.business.xp.ProcessXpEventPort;
 import samukadev.coderpg.core.integration.github.event.PushEventProcessorPort;
 import samukadev.coderpg.core.persistence.UserBuildRepositoryPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
+import samukadev.coderpg.core.persistence.XpEventRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.XpEvent;
 import samukadev.coderpg.domain.enums.XpSource;
@@ -29,6 +30,7 @@ public class PushEventProcessor implements PushEventProcessorPort {
     private final CalculateXpMultiplierPort calculateXpMultiplierPort;
     private final ProcessXpEventPort processXpEventPort;
     private final UserBuildRepositoryPort userBuildRepository;
+    private final XpEventRepositoryPort xpEventRepositoryPort;
 
     private static final int BASE_XP_PER_COMMIT = 50;
 
@@ -81,6 +83,12 @@ public class PushEventProcessor implements PushEventProcessorPort {
 
             for (int i = 0; i < totalCommits; i++) {
                 String commitSha = extractCommitSha(event, i);
+
+                if (xpEventRepositoryPort.existsByGithubEventId(commitSha)) {
+                    log.debug("Commit {} already processed", commitSha);
+                    continue;
+                }
+
                 processCommit(user, event, commitSha, resolution, i);
             }
 
