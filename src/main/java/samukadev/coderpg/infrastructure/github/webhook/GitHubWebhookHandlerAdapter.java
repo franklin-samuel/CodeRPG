@@ -2,6 +2,7 @@ package samukadev.coderpg.infrastructure.github.webhook;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.retry.annotation.Backoff;
@@ -12,6 +13,7 @@ import samukadev.coderpg.core.integration.github.event.*;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
 import samukadev.coderpg.domain.User;
 import samukadev.coderpg.domain.enums.GitHubEventType;
+import samukadev.coderpg.domain.exceptions.BusinessException;
 import samukadev.coderpg.domain.exceptions.GitHubWebhookException;
 import samukadev.coderpg.domain.github.GitHubEvent;
 import samukadev.coderpg.domain.github.GitHubWebhookPayload;
@@ -49,7 +51,12 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
     @Override
     @Async
     @Retryable(
-            value = {Exception.class},
+            retryFor = {Exception.class},
+            noRetryFor = {
+                    DataIntegrityViolationException.class,
+                    BusinessException.class,
+                    IllegalArgumentException.class
+            },
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000, multiplier = 2)
     )
@@ -91,6 +98,18 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
 
             log.info("Successfully processed {} event for user {}", type, senderGitHubId);
 
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage() != null && e.getMessage().contains("duplicate key")) {
+                log.info("Duplicate event detected, skipping processing: {}", e.getMessage());
+                return;
+            }
+            throw e;
+        } catch (BusinessException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already processed")) {
+                log.info("Event already processed: {}", e.getMessage());
+                return;
+            }
+            return;
         } catch (IllegalArgumentException e) {
             log.error("Validation error processing webhook: {}", e.getMessage());
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package samukadev.coderpg.business.xp;
 
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,6 @@ import samukadev.coderpg.domain.exceptions.BusinessException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ProcessXpEventAdapter implements ProcessXpEventPort {
 
     private final XpEventRepositoryPort xpEventRepositoryPort;
@@ -27,6 +27,7 @@ public class ProcessXpEventAdapter implements ProcessXpEventPort {
     private final SkillHistoryRepositoryPort skillHistoryRepositoryPort;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public XpEvent execute(final Context context) {
 
         XpEvent xpEvent = context.getData(XpEvent.class);
@@ -35,9 +36,11 @@ public class ProcessXpEventAdapter implements ProcessXpEventPort {
             throw new BusinessException("XP event with user ID is required.");
         }
 
-        if (xpEvent.getGithubEventId() != null &&
-            xpEventRepositoryPort.existsByGithubEventId(xpEvent.getGithubEventId())) {
-            throw new BusinessException("XP event with GITHUB ID already processed");
+        if (xpEvent.getGithubEventId() != null) {
+            if (xpEventRepositoryPort.existsByGithubEventId(xpEvent.getGithubEventId())) {
+                log.info("XP event with GITHUB ID {} already processed", xpEvent.getGithubEventId());
+                throw new BusinessException("XP event with GITHUB ID already processed.");
+            }
         }
 
         User user = userRepositoryPort.get(xpEvent.getUserId())
