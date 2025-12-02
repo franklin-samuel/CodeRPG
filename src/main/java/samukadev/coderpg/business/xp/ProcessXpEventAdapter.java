@@ -39,7 +39,7 @@ public class ProcessXpEventAdapter implements ProcessXpEventPort {
         if (xpEvent.getGithubEventId() != null) {
             if (xpEventRepositoryPort.existsByGithubEventId(xpEvent.getGithubEventId())) {
                 log.info("XP event with GITHUB ID {} already processed", xpEvent.getGithubEventId());
-                throw new BusinessException("XP event with GITHUB ID already processed.");
+                throw new BusinessException("XP event with Github ID already processed.");
             }
         }
 
