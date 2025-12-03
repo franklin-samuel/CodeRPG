@@ -98,7 +98,7 @@ public class AuthController {
         new SecurityContextLogoutHandler()
                 .logout(request, response, SecurityContextHolder.getContext().getAuthentication());
 
-        return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully!"));
     }
 
     @PostMapping(AuthRoute.REFRESH)
