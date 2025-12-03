@@ -31,14 +31,6 @@ jobs:
       - name: Build & Verify (tests + cobertura + checkstyle)
         run: mvn -B -ntp clean verify -DskipTests
 
-      - name: Generate per-module XML reports
-        if: always()
-        run: mvn -B -ntp -DskipTests jacoco:report
-
-      - name: Generate aggregate XML report (root)
-        if: always()
-        run: mvn -B -ntp -DskipTests jacoco:report-aggregate
-
       - name: Upload test & coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,48 +40,3 @@ jobs:
           path: |
             **/target/surefire-reports/**
             **/target/failsafe-reports/**
-            target/site/jacoco-aggregate/**
-
-      - name: Publish coverage to job summary (clean)
-        if: always()
-        continue-on-error: true
-        shell: bash
-        run: |
-          set +e; set +o pipefail
-          w(){ echo "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
-          
-          w "## JaCoCo – cobertura por módulo (sem duplicados)"
-          SUM_C=0; SUM_T=0; FOUND=0
-          
-          # Só pega o agregado do root + os jacoco.xml de cada módulo
-          while IFS= read -r -d '' FILE; do
-              FOUND=1
-              if [[ "$FILE" == "./target/site/jacoco-aggregate/jacoco.xml" ]]; then
-                  MOD="TOTAL (aggregate)"
-              else
-                  MOD="${FILE%/target/*}"; MOD="${MOD#./}"
-              fi
-          
-              LINE=$(grep -oE '<counter type="LINE"[^>]*/?>' "$FILE" | tail -n1)
-              MISSED=$(sed -n 's/.*missed="\([0-9]\+\)".*/\1/p' <<<"$LINE")
-              COVERED=$(sed -n 's/.*covered="\([0-9]\+\)".*/\1/p' <<<"$LINE")
-              MISSED=${MISSED:-0}; COVERED=${COVERED:-0}; TOTAL=$((MISSED+COVERED))
-              PCT=$(awk -v c="$COVERED" -v t="$TOTAL" 'BEGIN{ if (t>0) printf "%.2f",(c/t)*100; else print "0.00"}')
-          
-              # Soma só módulos (evita contar o aggregate na soma)
-              if [[ "$MOD" != "TOTAL (aggregate)" ]]; then
-                  SUM_C=$((SUM_C+COVERED)); SUM_T=$((SUM_T+TOTAL))
-              fi
-          
-              w "- ${MOD}: **${PCT}%** (${COVERED}/${TOTAL})"
-          done < <(find . -type f \( -path './target/site/jacoco-aggregate/jacoco.xml' -o -path '*/target/site/jacoco/jacoco.xml' \) -print0)
-          
-          if [ "$FOUND" -eq 0 ]; then
-              w "_Nenhum jacoco.xml encontrado._"
-          elif [ "$SUM_T" -gt 0 ]; then
-              TP=$(awk -v c="$SUM_C" -v t="$SUM_T" 'BEGIN{printf "%.2f",(c/t)*100}')
-              w ""; w "**Total ponderado (soma dos módulos): ${TP}% (${SUM_C}/${SUM_T})**"
-          fi
-          
-          exit 0
-
