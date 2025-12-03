@@ -49,7 +49,7 @@ public class PushEventProcessor implements PushEventProcessorPort {
 
             Optional<User> userOpt = userRepository.findByGitHubId(event.getSenderGithubId());
             if (userOpt.isEmpty()) {
-                log.warn("User not found for GitHub Id: {}", event.getSenderGithubId());
+                log.warn("User not found for GitHub ID: {}", event.getSenderGithubId());
                 return false;
             }
 
