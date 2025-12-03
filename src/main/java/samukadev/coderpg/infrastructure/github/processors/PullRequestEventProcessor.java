@@ -1,6 +1,7 @@
 package samukadev.coderpg.infrastructure.github.processors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import samukadev.coderpg.core.Context;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class PullRequestEventProcessor implements PullRequestEventProcessorPort {
 
     private final UserRepositoryPort userRepository;
@@ -47,6 +49,7 @@ public class PullRequestEventProcessor implements PullRequestEventProcessorPort 
         User user = userOpt.get();
 
         if (!shouldProcessAction(event.getAction())) {
+            log.debug("Skipping PR Event - Action: {}, Merged: {}", event.getAction(), event.getWasMerged());
             return false;
         }
 
@@ -59,6 +62,8 @@ public class PullRequestEventProcessor implements PullRequestEventProcessorPort 
 
         XpSource xpSource = determineXpSource(event.getAction(), event.getWasMerged());
         int xpAmount = calculateXpAmount(event.getAction(), event.getWasMerged());
+
+        log.info("Processing PR event - Action: {}, Merged: {} XP Source: {}, XP Amount: {}", event.getAction(), event.getWasMerged(), xpSource, xpAmount);
 
         XpEvent xpEvent = XpEvent.builder()
                 .userId(user.getId())
