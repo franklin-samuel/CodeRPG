@@ -86,11 +86,6 @@ public class GitHubWebhookHandlerAdapter implements GitHubWebHookHandlerPort {
                 return;
             }
 
-            if (type == GitHubEventType.PUSH && PushEventMapper.isMergeCommit(payloadMap)) {
-                log.info("Push event is a merge commit, skipping to avoid duplicate XP. PR event will handle this.");
-                return;
-            }
-
             GitHubEvent event = mapEvent(type, payloadMap);
             if (event == null) {
                 log.warn("Could not map event of type: {}", type);
