@@ -94,21 +94,4 @@ public class PushEventMapper {
             return LocalDateTime.now();
         }
     }
-
-    public static boolean isMergeCommit(Map<String, Object> payload) {
-        try {
-            Map<String, Object> headCommit = (Map<String, Object>) payload.get("head_commit");
-            if (headCommit == null) {
-                return false;
-            }
-
-            @SuppressWarnings("unchecked")
-            List<String> parents = (List<String>) headCommit.get("parents");
-
-            return parents != null && parents.size() >= 2;
-
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }
