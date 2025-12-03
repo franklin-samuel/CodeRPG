@@ -43,8 +43,6 @@ public class PushEventProcessor implements PushEventProcessorPort {
     @Override
     public Boolean processEvent(PushEvent event) {
         try {
-            log.info("Processing push event for repository: {}", event.getRepositoryFullName());
-
             event.validate();
 
             Optional<User> userOpt = userRepository.findByGitHubId(event.getSenderGithubId());
@@ -54,7 +52,6 @@ public class PushEventProcessor implements PushEventProcessorPort {
             }
 
             User user = userOpt.get();
-            log.debug("Processing push for user: {} ({})", user.getGithubUsername(), user.getId());
 
             String repoLanguage = event.getRepositoryLanguage();
             if (repoLanguage == null || repoLanguage.isBlank()) {
@@ -68,13 +65,10 @@ public class PushEventProcessor implements PushEventProcessorPort {
                 return false;
             }
 
-            log.debug("Mapped language '{}' to skill '{}'", repoLanguage, skillName);
-
             ResolveSkillType.SkillTypeResolution resolution =
                     ResolveSkillType.execute(user.getId(), skillName, userBuildRepository);
 
             int totalCommits = calculateTotalCommits(event);
-            log.info("Processing {} commits for user {}", totalCommits, user.getGithubUsername());
 
             if (totalCommits == 0) {
                 log.warn("No commits to process in push event");
