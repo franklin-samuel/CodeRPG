@@ -39,7 +39,7 @@ public class GitHubWebhookController {
 
         if (!validateSignature(payload, signature)) {
             log.error("Webhook signature validation failed");
-            throw new GitHubWebhookException("Invalid webhook signature");
+            throw new GitHubWebhookException("Invalid webhook signature!");
         }
 
         try {
