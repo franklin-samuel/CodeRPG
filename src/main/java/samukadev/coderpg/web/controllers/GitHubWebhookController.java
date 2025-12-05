@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.integration.github.GitHubWebHookHandlerPort;
 import samukadev.coderpg.domain.exceptions.GitHubWebhookException;
 import samukadev.coderpg.domain.github.GitHubWebhookPayload;
@@ -54,7 +55,10 @@ public class GitHubWebhookController {
                     .rawPayload(payload)
                     .build();
 
-            webhookHandler.processWebhook(webhookPayload, eventType);
+            Context context = new Context();
+            context.putProperty("payload", webhookPayload);
+            context.putProperty("eventType", eventType);
+            webhookHandler.execute(context);
 
             return ResponseEntity.ok(ApiResponse.success(
                     "Webhook accepted for processing",
