@@ -61,7 +61,7 @@ public class PullRequestEventMapper {
                 .title((String) prData.get("title"))
                 .body((String) prData.get("body"))
                 .state((String) prData.get("state"))
-                .merged((Boolean) prData.getOrDefault("merged", false))
+                .merged((Boolean) prData.getOrDefault("closed", false))
                 .baseBranch(base != null ? (String) base.get("ref") : null)
                 .headBranch(head != null ? (String) head.get("ref") : null)
                 .userLogin(user != null ? (String) user.get("login") : null)
