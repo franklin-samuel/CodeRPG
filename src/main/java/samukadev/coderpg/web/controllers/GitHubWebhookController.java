@@ -56,9 +56,9 @@ public class GitHubWebhookController {
                     .rawPayload(payload)
                     .build();
 
-            Context context = new Context();
-            context.putProperty("payload", webhookPayload);
+            Context context = new Context(webhookPayload);
             context.putProperty("eventType", eventType);
+            
             webhookHandler.execute(context);
 
             return ResponseEntity.ok(ApiResponse.success(
