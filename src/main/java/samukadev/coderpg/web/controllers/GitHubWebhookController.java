@@ -37,7 +37,6 @@ public class GitHubWebhookController {
             @RequestHeader(value = "X-GitHub-Delivery", required = false) String deliveryId
     ) {
         log.info("Received GitHub webhook - Event: {}, Delivery: {}", eventType, deliveryId);
-        log.info("Received GitHub webhook - Payload: {}", payload);
 
         if (!validateSignature(payload, signature)) {
             log.error("Webhook signature validation failed");
@@ -58,7 +57,7 @@ public class GitHubWebhookController {
 
             Context context = new Context(webhookPayload);
             context.putProperty("eventType", eventType);
-            
+
             webhookHandler.execute(context);
 
             return ResponseEntity.ok(ApiResponse.success(
