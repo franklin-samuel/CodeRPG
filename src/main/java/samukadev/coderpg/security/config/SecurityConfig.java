@@ -26,13 +26,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/webhooks/**",
-                                "api/auth/status",
+                                "/api/auth/status",
                                 "/public/**",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
-                                "swagger-ui.html",
+                                "/swagger-ui.html",
                                 "/health",
-                                "/login",
+                                "/api/auth/login",
                                 "/actuator/**",
                                 "/error"
                         ).permitAll()
