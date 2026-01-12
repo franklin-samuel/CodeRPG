@@ -61,6 +61,9 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
+        log.info("redirectUri: {}", request.getRedirectUri());
+        log.info("code: {}", request.getCode());
+
         Map<String, Object> tokenResponse = mobileAuthService
                 .exchangeCodeForToken(request.getCode(), request.getRedirectUri());
 

@@ -1,5 +1,6 @@
 package samukadev.coderpg.web.model.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,7 @@ public class MobileAuthRequest {
     private String code;
 
     @NotBlank
+    @JsonProperty("redirectUri")
     private String redirectUri;
 
 }
