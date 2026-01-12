@@ -29,6 +29,7 @@ public class SecurityConfig {
                                 "/api/auth/status",
                                 "/public/**",
                                 "/swagger-ui/**",
+                                "coderpg://**",
                                 "/swagger-resources/**",
                                 "/swagger-ui.html",
                                 "/health",
