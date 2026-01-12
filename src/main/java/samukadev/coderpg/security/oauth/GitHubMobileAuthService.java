@@ -1,10 +1,12 @@
 package samukadev.coderpg.security.oauth;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import samukadev.coderpg.domain.exceptions.BusinessException;
 
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GitHubMobileAuthService {
@@ -20,6 +23,7 @@ public class GitHubMobileAuthService {
     private final WebClient.Builder webClientBuilder;
 
     public Map<String, Object> exchangeCodeForToken(String code, String redirectUri) {
+
         try {
             return webClientBuilder.build()
                     .post()
@@ -32,6 +36,10 @@ public class GitHubMobileAuthService {
                     .retrieve()
                     .bodyToMono(new  ParameterizedTypeReference<Map<String, Object>>(){})
                     .onErrorResume(error -> {
+                        if (error instanceof WebClientResponseException e) {
+                            log.error("Corpo do erro do Github: " + e.getResponseBodyAsString());
+                        }
+
                         return Mono.error(new BusinessException(
                                 "Failed to authenticate with Github: " + error.getMessage()
                         ));
