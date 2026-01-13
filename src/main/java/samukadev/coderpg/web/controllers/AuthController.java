@@ -150,40 +150,65 @@ public class AuthController {
                 .body(ApiResponse.success(loginResponse));
     }
 
+
     @GetMapping(AuthRoute.STATUS)
     public ResponseEntity<ApiResponse<AuthStatusResponse>> getAuthStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        log.debug("Auth status check - Authorization header present: {}", authHeader != null);
+        log.debug("🔍 Auth status check - Authorization header: {}",
+                authHeader != null ? authHeader.substring(0, Math.min(20, authHeader.length())) + "..." : "null");
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        // Verifica se tem autenticação válida
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
 
-            log.debug("No authentication found in context");
+            log.debug("❌ No authentication found in context");
             return ResponseEntity.ok(ApiResponse.success(
-                    AuthStatusResponse.builder().authenticated(false).build()
+                    AuthStatusResponse.builder()
+                            .authenticated(false)
+                            .userId(null)
+                            .githubUsername(null)
+                            .name(null)
+                            .avatarUrl(null)
+                            .hasValidGitHubToken(false)
+                            .needsOnBoarding(null)
+                            .build()
             ));
         }
 
         try {
+            // Extrai o githubId da autenticação (TokenAuthenticationFilter coloca isso)
             String githubIdStr = authentication.getName();
+            log.debug("🔑 GitHub ID from authentication: {}", githubIdStr);
+
             Long githubId = Long.parseLong(githubIdStr);
 
             Optional<User> userOpt = userRepository.findByGitHubId(githubId);
 
             if (userOpt.isEmpty()) {
-                log.warn("User not found for GitHub ID: {}", githubId);
+                log.warn("⚠️ User not found for GitHub ID: {}", githubId);
                 return ResponseEntity.ok(ApiResponse.success(
-                        AuthStatusResponse.builder().authenticated(false).build()
+                        AuthStatusResponse.builder()
+                                .authenticated(false)
+                                .userId(null)
+                                .githubUsername(null)
+                                .name(null)
+                                .avatarUrl(null)
+                                .hasValidGitHubToken(false)
+                                .needsOnBoarding(null)
+                                .build()
                 ));
             }
 
             User user = userOpt.get();
             boolean hasValidToken = gitHubOAuthService.hasValidToken(user.getId());
 
-            log.info("User status checked: {} ({})", user.getGithubUsername(), user.getId());
+            log.info("✅ User status checked: {} ({})", user.getGithubUsername(), user.getId());
+            log.debug("📊 User details: authenticated=true, hasValidToken={}, needsOnBoarding={}",
+                    hasValidToken,
+                    user.getName() == null || user.getClassType() == null);
 
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(true)
@@ -197,10 +222,31 @@ public class AuthController {
 
             return ResponseEntity.ok(ApiResponse.success(response));
 
-        } catch (Exception e) {
-            log.error("Error getting auth status: {}", e.getMessage());
+        } catch (NumberFormatException e) {
+            log.error("❌ Invalid GitHub ID format: {}", e.getMessage());
             return ResponseEntity.ok(ApiResponse.success(
-                    AuthStatusResponse.builder().authenticated(false).build()
+                    AuthStatusResponse.builder()
+                            .authenticated(false)
+                            .userId(null)
+                            .githubUsername(null)
+                            .name(null)
+                            .avatarUrl(null)
+                            .hasValidGitHubToken(false)
+                            .needsOnBoarding(null)
+                            .build()
+            ));
+        } catch (Exception e) {
+            log.error("❌ Error getting auth status: {}", e.getMessage(), e);
+            return ResponseEntity.ok(ApiResponse.success(
+                    AuthStatusResponse.builder()
+                            .authenticated(false)
+                            .userId(null)
+                            .githubUsername(null)
+                            .name(null)
+                            .avatarUrl(null)
+                            .hasValidGitHubToken(false)
+                            .needsOnBoarding(null)
+                            .build()
             ));
         }
     }

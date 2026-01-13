@@ -36,14 +36,19 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String requestPath = request.getRequestURI();
+
         try {
             String token = extractTokenFromRequest(request);
 
             if (token != null && !token.isBlank()) {
+                log.debug("🔑 Token encontrado para {}: {}", requestPath, token.substring(0, 8) + "...");
                 authenticateUser(token, request);
+            } else {
+                log.debug("⚠️ Nenhum token encontrado para {}", requestPath);
             }
         } catch (Exception e) {
-            log.error("Error authenticating user from token: {}", e.getMessage());
+            log.error("❌ Error authenticating user from token for {}: {}", requestPath, e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -61,26 +66,33 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private void authenticateUser(String userId, HttpServletRequest request) {
         try {
+            log.debug("🔍 Tentando autenticar usuário com ID: {}", userId.substring(0, 8) + "...");
+
             UUID userUuid = UUID.fromString(userId);
             Optional<User> userOpt = userRepository.get(userUuid);
 
             if (userOpt.isEmpty()) {
-                log.warn("User not found for ID: {}", userId);
+                log.warn("⚠️ User not found for ID: {}", userId.substring(0, 8) + "...");
                 return;
             }
 
             User user = userOpt.get();
+            log.debug("✅ Usuário encontrado: {} (githubId: {})", user.getGithubUsername(), user.getGithubId());
 
             boolean hasValidToken = gitHubOAuthService.hasValidToken(user.getId());
 
             if (!hasValidToken) {
-                log.warn("User {} does not have a valid GitHub token", userId);
+                log.warn("⚠️ User {} does not have a valid GitHub token", userId.substring(0, 8) + "...");
                 return;
             }
 
+            log.debug("✅ Token do GitHub válido para usuário {}", user.getGithubUsername());
+
+            // IMPORTANTE: Coloca o githubId como "name" da autenticação
+            // O AuthController usa authentication.getName() para buscar o user
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            user.getGithubId().toString(),
+                            user.getGithubId().toString(),  // ← githubId aqui
                             null,
                             Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
                     );
@@ -88,10 +100,12 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("User {} authenticated successfully via token", userId);
+            log.info("✅ User {} authenticated successfully via token", userId.substring(0, 8) + "...");
 
         } catch (IllegalArgumentException e) {
-            log.warn("Invalid UUID format: {}", userId);
+            log.warn("⚠️ Invalid UUID format: {}", userId);
+        } catch (Exception e) {
+            log.error("❌ Error during authentication: {}", e.getMessage(), e);
         }
     }
 }
