@@ -1,26 +1,16 @@
 package samukadev.coderpg.web.controllers;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import samukadev.coderpg.core.Context;
 import samukadev.coderpg.core.business.user.CreateUserPort;
 import samukadev.coderpg.core.persistence.UserRepositoryPort;
@@ -33,11 +23,11 @@ import samukadev.coderpg.security.oauth.GitHubOAuthService;
 import samukadev.coderpg.web.commons.ApiResponse;
 import samukadev.coderpg.web.model.request.MobileAuthRequest;
 import samukadev.coderpg.web.model.response.AuthStatusResponse;
+import samukadev.coderpg.web.model.response.LoginResponse;
 import samukadev.coderpg.web.routes.AuthRoute;
 import samukadev.coderpg.web.security.SecurityUtils;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,13 +46,10 @@ public class AuthController {
     private final SaveGitHubTokenPort saveGitHubTokenPort;
 
     @PostMapping(AuthRoute.LOGIN)
-    public ResponseEntity<ApiResponse<AuthStatusResponse>> authenticateWithGithub(
-            @Valid @RequestBody MobileAuthRequest request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse
+    public ResponseEntity<ApiResponse<LoginResponse>> authenticateWithGithub(
+            @Valid @RequestBody MobileAuthRequest request
     ) {
-        log.info("redirectUri: {}", request.getRedirectUri());
-        log.info("code: {}", request.getCode());
+        log.info("Mobile login attempt - redirectUri: {}", request.getRedirectUri());
 
         Map<String, Object> tokenResponse = mobileAuthService
                 .exchangeCodeForToken(request.getCode(), request.getRedirectUri());
@@ -71,7 +58,7 @@ public class AuthController {
         String refreshToken = (String) tokenResponse.get("refresh_token");
 
         if (accessToken == null || accessToken.isBlank()) {
-            throw new BusinessException("Failed to get access token from github");
+            throw new BusinessException("Failed to get access token from GitHub");
         }
 
         Map<String, Object> githubUser = mobileAuthService.getGitHubUser(accessToken);
@@ -104,6 +91,8 @@ public class AuthController {
             user.setGithubFollowing(following);
             user.setLastSyncAt(LocalDateTime.now());
             user = userRepository.save(user);
+
+            log.info("Existing user logged in: {} ({})", user.getGithubUsername(), user.getId());
         } else {
             isNewUser = true;
             User newUser = User.builder()
@@ -126,6 +115,8 @@ public class AuthController {
 
             Context createUserContext = new Context(newUser);
             user = createUserPort.execute(createUserContext);
+
+            log.info("New user created: {} ({})", user.getGithubUsername(), user.getId());
         }
 
         LocalDateTime expiresAt = mobileAuthService.calculateExpiresAt(tokenResponse.get("expires_in"));
@@ -136,28 +127,6 @@ public class AuthController {
         saveTokenContext.putProperty("refreshToken", refreshToken);
         saveTokenContext.putProperty("expiresAt", expiresAt);
         saveGitHubTokenPort.execute(saveTokenContext);
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                githubId.toString(),
-                null,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
-
-        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
-        httpRequest.getSession().setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                securityContext
-        );
-
-        Cookie sessionCookie = new Cookie("JSESSIONID", httpRequest.getSession().getId());
-        sessionCookie.setHttpOnly(true);
-        sessionCookie.setSecure(true);
-        sessionCookie.setPath("/");
-        sessionCookie.setMaxAge(60 * 60 * 24 * 7);
-        httpResponse.addCookie(sessionCookie);
 
         boolean needsOnBoarding = user.getName() == null || user.getClassType() == null;
 
@@ -170,32 +139,51 @@ public class AuthController {
                 .hasValidGitHubToken(true)
                 .needsOnBoarding(needsOnBoarding)
                 .build();
+
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(user.getId().toString())
+                .authStatus(authStatus)
+                .build();
+
         return ResponseEntity
                 .status(isNewUser ? HttpStatus.CREATED : HttpStatus.OK)
-                .body(ApiResponse.success(authStatus));
+                .body(ApiResponse.success(loginResponse));
     }
 
     @GetMapping(AuthRoute.STATUS)
     public ResponseEntity<ApiResponse<AuthStatusResponse>> getAuthStatus(
-            @AuthenticationPrincipal OAuth2User principal
+            @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        log.debug("Auth status check - Principal present: {}", principal != null);
+        log.debug("Auth status check - Authorization header present: {}", authHeader != null);
 
-        if (principal == null) {
-            log.debug("No authentication principal found");
-            AuthStatusResponse response = AuthStatusResponse.builder()
-                    .authenticated(false)
-                    .build();
-            return ResponseEntity.ok(ApiResponse.success(response));
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+
+            log.debug("No authentication found in context");
+            return ResponseEntity.ok(ApiResponse.success(
+                    AuthStatusResponse.builder().authenticated(false).build()
+            ));
         }
 
         try {
-            log.debug("Principal attributes: {}", principal.getAttributes());
+            String githubIdStr = authentication.getName();
+            Long githubId = Long.parseLong(githubIdStr);
 
-            User user = securityUtils.getAuthenticatedUser(principal);
+            Optional<User> userOpt = userRepository.findByGitHubId(githubId);
+
+            if (userOpt.isEmpty()) {
+                log.warn("User not found for GitHub ID: {}", githubId);
+                return ResponseEntity.ok(ApiResponse.success(
+                        AuthStatusResponse.builder().authenticated(false).build()
+                ));
+            }
+
+            User user = userOpt.get();
             boolean hasValidToken = gitHubOAuthService.hasValidToken(user.getId());
 
-            log.info("User authenticated: {} ({})", user.getGithubUsername(), user.getId());
+            log.info("User status checked: {} ({})", user.getGithubUsername(), user.getId());
 
             AuthStatusResponse response = AuthStatusResponse.builder()
                     .authenticated(true)
@@ -208,50 +196,72 @@ public class AuthController {
                     .build();
 
             return ResponseEntity.ok(ApiResponse.success(response));
-        } catch (BusinessException e) {
-            log.error("Error getting authenticated user: {}!", e.getMessage());
-            AuthStatusResponse response = AuthStatusResponse.builder()
-                    .authenticated(false)
-                    .build();
 
-            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("Error getting auth status: {}", e.getMessage());
+            return ResponseEntity.ok(ApiResponse.success(
+                    AuthStatusResponse.builder().authenticated(false).build()
+            ));
         }
     }
 
     @PostMapping(AuthRoute.LOGOUT)
     public ResponseEntity<ApiResponse<String>> logout(
-            @AuthenticationPrincipal OAuth2User principal,
-            HttpServletRequest request,
-            HttpServletResponse response
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request
     ) {
-        if (principal != null) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
             try {
-                UUID userId = securityUtils.getAuthenticatedUserId(principal);
+                String githubIdStr = authentication.getName();
+                Long githubId = Long.parseLong(githubIdStr);
 
-                Context context = new Context();
-                context.putProperty("userId", userId);
-                revokeGitHubTokenPort.execute(context);
+                Optional<User> userOpt = userRepository.findByGitHubId(githubId);
 
-            } catch (BusinessException e) {
+                if (userOpt.isPresent()) {
+                    Context context = new Context();
+                    context.putProperty("userId", userOpt.get().getId());
+                    revokeGitHubTokenPort.execute(context);
+
+                    log.info("User {} logged out successfully", userOpt.get().getGithubUsername());
+                }
+            } catch (Exception e) {
                 log.error("Error during logout: {}", e.getMessage());
             }
         }
 
-        new SecurityContextLogoutHandler()
-                .logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+        new SecurityContextLogoutHandler().logout(request, null, authentication);
+        SecurityContextHolder.clearContext();
 
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully!"));
     }
 
     @PostMapping(AuthRoute.REFRESH)
     public ResponseEntity<ApiResponse<String>> refreshToken(
-            @AuthenticationPrincipal OAuth2User principal
+            @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        UUID userId = securityUtils.getAuthenticatedUserId(principal);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Not authenticated", "NOT_AUTHENTICATED"));
+        }
 
         try {
-            gitHubOAuthService.refreshAccessToken(userId);
-            return ResponseEntity.ok(ApiResponse.success("Refreshed successfully"));
+            String githubIdStr = authentication.getName();
+            Long githubId = Long.parseLong(githubIdStr);
+
+            Optional<User> userOpt = userRepository.findByGitHubId(githubId);
+
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("User not found", "USER_NOT_FOUND"));
+            }
+
+            gitHubOAuthService.refreshAccessToken(userOpt.get().getId());
+            return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully"));
+
         } catch (BusinessException e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(e.getMessage(), "REFRESH_FAILED"));
